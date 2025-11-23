@@ -1,0 +1,32 @@
+# Node.js Backend
+backend/node_modules/
+backend/.env
+backend/logs/
+backend/*.log
+
+# Flutter Frontend
+frontend/.dart_tool/
+frontend/.flutter-plugins
+frontend/.flutter-plugins-dependencies
+frontend/.packages
+frontend/build/
+frontend/pubspec.lock
+frontend/.metadata
+
+# IDE
+.vscode/
+.idea/
+*.iml
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Test coverage
+coverage/
+
+# Database
+*.sql.backup
