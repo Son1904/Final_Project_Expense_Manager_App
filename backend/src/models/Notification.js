@@ -10,19 +10,19 @@ const notificationSchema = new mongoose.Schema({
     type: String,
     required: true,
     enum: [
-      'BUDGET_EXCEEDED',      // Budget vượt quá giới hạn
-      'BUDGET_WARNING',       // Budget đạt 80%
-      'BUDGET_ON_TRACK',      // Budget đang ổn định
-      'RECURRING_UPCOMING',   // Giao dịch định kỳ sắp đến
-      'RECURRING_MISSED',     // Giao dịch định kỳ bị bỏ lỡ
-      'WEEKLY_SUMMARY',       // Tổng kết tuần
-      'MONTHLY_SUMMARY',      // Tổng kết tháng
-      'GOAL_ACHIEVED',        // Đạt được mục tiêu
-      'LARGE_TRANSACTION',    // Giao dịch lớn
-      'SPENDING_SPIKE',       // Chi tiêu tăng đột biến
-      'SAVINGS_TIP',          // Mẹo tiết kiệm
-      'ACHIEVEMENT',          // Thành tích
-      'SYSTEM'                // Thông báo hệ thống
+      'BUDGET_EXCEEDED',      // Budget exceeded
+      'BUDGET_WARNING',       // Budget reached warning threshold (80%)
+      'BUDGET_ON_TRACK',      // Budget on track
+      'RECURRING_UPCOMING',   // Upcoming recurring transaction
+      'RECURRING_MISSED',     // Missed recurring transaction
+      'WEEKLY_SUMMARY',       // Weekly summary
+      'MONTHLY_SUMMARY',      // Monthly summary
+      'GOAL_ACHIEVED',        // Goal achieved
+      'LARGE_TRANSACTION',    // Large transaction
+      'SPENDING_SPIKE',       // Spending spike
+      'SAVINGS_TIP',          // Savings tip
+      'ACHIEVEMENT',          // Achievement
+      'SYSTEM'                // System notification
     ]
   },
   title: {
@@ -42,7 +42,7 @@ const notificationSchema = new mongoose.Schema({
     type: Boolean,
     default: false
   },
-  // Reference data cho navigation
+  // Reference data for navigation
   referenceType: {
     type: String,
     enum: ['BUDGET', 'TRANSACTION', 'CATEGORY', 'NONE'],
@@ -52,7 +52,7 @@ const notificationSchema = new mongoose.Schema({
     type: String,
     default: null
   },
-  // Metadata bổ sung
+  // Additional metadata
   metadata: {
     type: mongoose.Schema.Types.Mixed,
     default: {}
@@ -68,29 +68,29 @@ const notificationSchema = new mongoose.Schema({
   }
 });
 
-// Index compound để query nhanh
+// Compound index for fast queries
 notificationSchema.index({ userId: 1, createdAt: -1 });
 notificationSchema.index({ userId: 1, isRead: 1 });
 
-// Method để đánh dấu đã đọc
+// Method to mark as read
 notificationSchema.methods.markAsRead = async function() {
   this.isRead = true;
   this.readAt = new Date();
   return this.save();
 };
 
-// Static method để tạo notification
+// Static method to create notification
 notificationSchema.statics.createNotification = async function(data) {
   const notification = new this(data);
   return notification.save();
 };
 
-// Static method để lấy notifications chưa đọc
+// Static method to get unread notifications
 notificationSchema.statics.getUnreadCount = async function(userId) {
   return this.countDocuments({ userId, isRead: false });
 };
 
-// Static method để đánh dấu tất cả đã đọc
+// Static method to mark all as read
 notificationSchema.statics.markAllAsRead = async function(userId) {
   return this.updateMany(
     { userId, isRead: false },
