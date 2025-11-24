@@ -7,6 +7,9 @@
 const { Transaction, Category } = require('../models');
 const { AppError, asyncHandler } = require('../middleware/error.middleware');
 const logger = require('../utils/logger');
+const { createNotification } = require('./notificationController');
+const { checkBudgetAlert } = require('./budgetController');
+const { isNotificationEnabled } = require('./settingsController');
 
 /**
  * Create a new transaction
@@ -82,6 +85,41 @@ const createTransaction = asyncHandler(async (req, res) => {
   const populatedTransaction = await Transaction.findById(transaction._id)
     .populate('category', 'name icon color type');
 
+  // Check for large transaction notification (>= $1,000 USD)
+  if (amount >= 1000) {
+    try {
+      // Check if user has this notification enabled
+      const isEnabled = await isNotificationEnabled(req.user.id.toString(), 'LARGE_TRANSACTION');
+      
+      if (isEnabled) {
+        await createNotification(req.user.id.toString(), {
+          type: 'LARGE_TRANSACTION',
+          title: 'Large transaction detected',
+          message: `${type === 'expense' ? 'Expense' : 'Income'} of ${formatCurrency(amount)} on ${categoryDoc.name}`,
+          priority: 'MEDIUM',
+          referenceType: 'TRANSACTION',
+          referenceId: transaction._id.toString(),
+          metadata: {
+            amount,
+            type,
+            categoryName: categoryDoc.name,
+            description
+          }
+        });
+        console.log('✅ Large transaction notification created');
+      } else {
+        console.log('ℹ️  Large transaction notification skipped (disabled by user)');
+      }
+    } catch (error) {
+      console.error('❌ Error creating large transaction notification:', error);
+    }
+  }
+
+  // Update related budgets and check alerts
+  if (type === 'expense') {
+    await updateBudgetsAfterTransaction(req.user.id.toString(), category);
+  }
+
   res.status(201).json({
     status: 'success',
     message: 'Transaction created successfully',
@@ -95,6 +133,7 @@ const createTransaction = asyncHandler(async (req, res) => {
  * Get all transactions for authenticated user
  * @route GET /api/transactions
  * @access Private
+ * @query {string} search - Search by description or notes
  * @query {string} type - Filter by 'income' or 'expense'
  * @query {string} category - Filter by category ID
  * @query {date} startDate - Filter by start date
@@ -108,6 +147,7 @@ const createTransaction = asyncHandler(async (req, res) => {
  */
 const getTransactions = asyncHandler(async (req, res) => {
   const {
+    search,
     type,
     category,
     startDate,
@@ -121,6 +161,14 @@ const getTransactions = asyncHandler(async (req, res) => {
 
   // Build query filter
   const query = { userId: req.user.id };
+
+  // Search by description or notes
+  if (search) {
+    query.$or = [
+      { description: { $regex: search, $options: 'i' } },
+      { notes: { $regex: search, $options: 'i' } },
+    ];
+  }
 
   // Filter by transaction type
   if (type) {
@@ -136,10 +184,18 @@ const getTransactions = asyncHandler(async (req, res) => {
   if (startDate || endDate) {
     query.date = {};
     if (startDate) {
-      query.date.$gte = new Date(startDate);
+      // Parse the date and get start of day in UTC
+      const start = new Date(startDate);
+      // Create a new date using only year, month, day in UTC
+      const utcStart = new Date(Date.UTC(start.getUTCFullYear(), start.getUTCMonth(), start.getUTCDate(), 0, 0, 0, 0));
+      query.date.$gte = utcStart;
     }
     if (endDate) {
-      query.date.$lte = new Date(endDate);
+      // Parse the date and get end of day in UTC
+      const end = new Date(endDate);
+      // Create a new date using only year, month, day in UTC, set to end of day
+      const utcEnd = new Date(Date.UTC(end.getUTCFullYear(), end.getUTCMonth(), end.getUTCDate(), 23, 59, 59, 999));
+      query.date.$lte = utcEnd;
     }
   }
 
@@ -371,6 +427,126 @@ const getSpendingByCategory = asyncHandler(async (req, res) => {
   });
 });
 
+/**
+ * Helper function to update budgets after transaction
+ * @param {string} userId
+ * @param {string} categoryId
+ */
+async function updateBudgetsAfterTransaction(userId, categoryId) {
+  try {
+    const Budget = require('../models/Budget');
+    
+    console.log('🔍 Checking budgets for userId:', userId, 'categoryId:', categoryId);
+    
+    // Find all active budgets that include this category
+    const budgets = await Budget.find({
+      userId,
+      isActive: true,
+      categories: categoryId
+    });
+
+    console.log(`✅ Found ${budgets.length} active budgets with this category`);
+
+    // Update spent amount and check alerts for each budget
+    for (const budget of budgets) {
+      console.log(`📊 Updating budget: ${budget.name}`);
+      await budget.updateSpent();
+      await checkBudgetAlert(budget);
+    }
+  } catch (error) {
+    console.error('❌ Error updating budgets after transaction:', error);
+  }
+}
+
+/**
+ * Helper function to format currency
+ * @param {number} amount
+ * @returns {string}
+ */
+function formatCurrency(amount) {
+  return new Intl.NumberFormat('en-US', {
+    style: 'currency',
+    currency: 'USD'
+  }).format(amount);
+}
+
+/**
+ * Export transactions to CSV
+ * @route GET /api/transactions/export
+ * @access Private
+ * @query {string} type - Filter by type ('income' or 'expense')
+ * @query {string} category - Filter by category ID
+ * @query {date} startDate - Filter by start date
+ * @query {date} endDate - Filter by end date
+ * @query {string} search - Search in description and notes
+ * @returns {text/csv} CSV file with transactions
+ */
+const exportTransactionsToCSV = asyncHandler(async (req, res) => {
+  const { type, category, startDate, endDate, search } = req.query;
+  const userId = req.user.id.toString();
+
+  // Build query (same as getTransactions)
+  const query = { userId };
+
+  if (type) {
+    query.type = type;
+  }
+
+  if (category) {
+    query.category = category;
+  }
+
+  if (startDate || endDate) {
+    query.date = {};
+    if (startDate) {
+      query.date.$gte = new Date(startDate);
+    }
+    if (endDate) {
+      const endOfDay = new Date(endDate);
+      endOfDay.setHours(23, 59, 59, 999);
+      query.date.$lte = endOfDay;
+    }
+  }
+
+  if (search) {
+    query.$or = [
+      { description: { $regex: search, $options: 'i' } },
+      { notes: { $regex: search, $options: 'i' } },
+    ];
+  }
+
+  // Fetch all transactions (no pagination for export)
+  const transactions = await Transaction.find(query)
+    .populate('category', 'name icon')
+    .sort({ date: -1 });
+
+  logger.info(`Exporting ${transactions.length} transactions for user ${userId}`);
+
+  // Generate CSV content
+  const csvHeader = 'Date,Type,Category,Description,Amount,Payment Method,Notes\n';
+  
+  const csvRows = transactions.map(t => {
+    const date = t.date.toISOString().split('T')[0]; // YYYY-MM-DD
+    const type = t.type.charAt(0).toUpperCase() + t.type.slice(1); // Capitalize
+    const category = t.category ? t.category.name : 'Uncategorized';
+    const description = (t.description || '').replace(/"/g, '""'); // Escape quotes
+    const amount = t.amount.toFixed(2);
+    const paymentMethod = t.paymentMethod || '';
+    const notes = (t.notes || '').replace(/"/g, '""'); // Escape quotes
+    
+    return `"${date}","${type}","${category}","${description}","${amount}","${paymentMethod}","${notes}"`;
+  }).join('\n');
+
+  const csv = csvHeader + csvRows;
+
+  // Set headers for CSV download
+  const filename = `transactions_${new Date().toISOString().split('T')[0]}.csv`;
+  res.setHeader('Content-Type', 'text/csv');
+  res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+  
+  res.status(200).send(csv);
+});
+
 module.exports = {
   createTransaction,
   getTransactions,
@@ -379,4 +555,5 @@ module.exports = {
   deleteTransaction,
   getTransactionSummary,
   getSpendingByCategory,
+  exportTransactionsToCSV,
 };

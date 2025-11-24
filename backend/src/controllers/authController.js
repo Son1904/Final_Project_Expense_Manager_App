@@ -10,7 +10,7 @@ const { getPgPool } = require('../config/database');
 const { generateAccessToken, generateRefreshToken, verifyRefreshToken } = require('../utils/jwt');
 const { AppError, asyncHandler } = require('../middleware/error.middleware');
 const logger = require('../utils/logger');
-const { Category } = require('../models');
+const { Category, Transaction, Budget, Notification } = require('../models');
 
 /**
  * Register a new user
@@ -286,18 +286,189 @@ const getProfile = asyncHandler(async (req, res) => {
 
   res.status(200).json({
     status: 'success',
-    data: {
-      user: {
-        id: user.id,
-        email: user.email,
-        fullName: user.full_name,
-        phone: user.phone,
-        avatarUrl: user.avatar_url,
-        emailVerified: user.email_verified,
-        phoneVerified: user.phone_verified,
-        createdAt: user.created_at,
-      },
+    user: {
+      id: user.id,
+      email: user.email,
+      fullName: user.full_name,
+      phone: user.phone,
+      avatarUrl: user.avatar_url,
+      emailVerified: user.email_verified,
+      phoneVerified: user.phone_verified,
+      createdAt: user.created_at,
     },
+  });
+});
+
+/**
+ * Change user password
+ * @route PUT /api/auth/change-password
+ * @access Private
+ * @param {string} currentPassword - Current password (required)
+ * @param {string} newPassword - New password (required, min 6 chars)
+ * @returns {object} Success message
+ */
+const changePassword = asyncHandler(async (req, res) => {
+  const { currentPassword, newPassword } = req.body;
+  const userId = req.user.id;
+
+  console.log('Change password request:', { userId, hasCurrentPwd: !!currentPassword, hasNewPwd: !!newPassword });
+
+  // Validate required fields
+  if (!currentPassword || !newPassword) {
+    throw new AppError('Current password and new password are required', 400);
+  }
+
+  // Validate new password length
+  if (newPassword.length < 6) {
+    throw new AppError('New password must be at least 6 characters', 400);
+  }
+
+  // Check if new password is same as current
+  if (currentPassword === newPassword) {
+    throw new AppError('New password must be different from current password', 400);
+  }
+
+  try {
+    const pool = getPgPool();
+
+    // Get user's current password hash
+    const result = await pool.query(
+      'SELECT password_hash FROM users WHERE id = $1',
+      [userId]
+    );
+
+    console.log('User query result:', { found: result.rows.length > 0 });
+
+    if (result.rows.length === 0) {
+      throw new AppError('User not found', 404);
+    }
+
+    const user = result.rows[0];
+
+    // Verify current password
+    const isPasswordValid = await bcrypt.compare(currentPassword, user.password_hash);
+    console.log('Password validation:', { isValid: isPasswordValid });
+    
+    if (!isPasswordValid) {
+      throw new AppError('Current password is incorrect', 401);
+    }
+
+    // Hash new password
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+
+    // Update password in database
+    await pool.query(
+      'UPDATE users SET password_hash = $1, updated_at = NOW() WHERE id = $2',
+      [hashedPassword, userId]
+    );
+
+    logger.info(`User ${userId} changed password`);
+
+    res.json({
+      success: true,
+      message: 'Password changed successfully',
+    });
+  } catch (error) {
+    console.error('Change password error:', error);
+    throw error;
+  }
+});
+
+/**
+ * Update user profile (full name)
+ * @route PUT /api/auth/profile
+ * @access Private
+ * @param {string} fullName - New full name (required)
+ * @returns {object} Updated user data
+ */
+const updateProfile = asyncHandler(async (req, res) => {
+  const { fullName } = req.body;
+  const userId = req.user.id;
+
+  if (!fullName || fullName.trim().length === 0) {
+    throw new AppError('Full name is required', 400);
+  }
+
+  const pool = getPgPool();
+
+  // Update full name
+  const result = await pool.query(
+    'UPDATE users SET full_name = $1, updated_at = NOW() WHERE id = $2 RETURNING id, email, full_name, phone, created_at',
+    [fullName.trim(), userId]
+  );
+
+  if (result.rows.length === 0) {
+    throw new AppError('User not found', 404);
+  }
+
+  const user = result.rows[0];
+
+  logger.info(`User ${userId} updated profile`);
+
+  res.json({
+    success: true,
+    message: 'Profile updated successfully',
+    user: {
+      id: user.id,
+      email: user.email,
+      fullName: user.full_name,
+      phone: user.phone,
+      createdAt: user.created_at,
+    },
+  });
+});
+
+/**
+ * Clear all user data (transactions, budgets, notifications)
+ * @route DELETE /api/auth/clear-data
+ * @access Private
+ * @returns {object} Success message
+ */
+const clearUserData = asyncHandler(async (req, res) => {
+  const userId = req.user.id;
+
+  // Clear MongoDB data
+  await Promise.all([
+    Transaction.deleteMany({ userId: userId.toString() }),
+    Budget.deleteMany({ userId: userId.toString() }),
+    Notification.deleteMany({ userId: userId.toString() }),
+    Category.deleteMany({ userId: userId.toString(), isDefault: false }), // Keep default categories
+  ]);
+
+  logger.info(`User ${userId} cleared all data`);
+
+  res.json({
+    success: true,
+    message: 'All data cleared successfully',
+  });
+});
+
+/**
+ * Delete user account permanently
+ * @route DELETE /api/auth/account
+ * @access Private
+ * @returns {object} Success message
+ */
+const deleteAccount = asyncHandler(async (req, res) => {
+  const userId = req.user.id;
+
+  // Delete MongoDB data first
+  await Promise.all([
+    Transaction.deleteMany({ userId: userId.toString() }),
+    Budget.deleteMany({ userId: userId.toString() }),
+    Notification.deleteMany({ userId: userId.toString() }),
+    Category.deleteMany({ userId: userId.toString() }),
+  ]);
+
+  // Delete from PostgreSQL (cascades to refresh_tokens and user_notification_preferences)
+  const pool = getPgPool();
+  await pool.query('DELETE FROM users WHERE id = $1', [userId]);
+
+  logger.info(`User ${userId} deleted account`);
+
+  res.json({
+    success: true,
+    message: 'Account deleted successfully',
   });
 });
 
@@ -307,4 +478,8 @@ module.exports = {
   refreshAccessToken,
   logout,
   getProfile,
+  changePassword,
+  updateProfile,
+  clearUserData,
+  deleteAccount,
 };

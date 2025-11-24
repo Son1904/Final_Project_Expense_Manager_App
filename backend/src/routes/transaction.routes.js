@@ -7,6 +7,7 @@ const {
   deleteTransaction,
   getTransactionSummary,
   getSpendingByCategory,
+  exportTransactionsToCSV,
 } = require('../controllers/transactionController');
 const { authenticate } = require('../middleware/auth.middleware');
 
@@ -16,6 +17,7 @@ router.use(authenticate);
 
 router.post('/', createTransaction);
 router.get('/', getTransactions);
+router.get('/export', exportTransactionsToCSV);
 router.get('/summary', getTransactionSummary);
 router.get('/spending-by-category', getSpendingByCategory);
 router.get('/:id', getTransactionById);

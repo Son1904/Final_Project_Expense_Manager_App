@@ -35,10 +35,17 @@ class TransactionProvider extends ChangeNotifier {
   List<SpendingByCategory> get spendingByCategory => _spendingByCategory;
 
   // Filters
+  String? _searchQuery;
   String? _filterType;
   String? _filterCategoryId;
   DateTime? _filterStartDate;
   DateTime? _filterEndDate;
+
+  String? get searchQuery => _searchQuery;
+  String? get filterType => _filterType;
+  String? get filterCategoryId => _filterCategoryId;
+  DateTime? get filterStartDate => _filterStartDate;
+  DateTime? get filterEndDate => _filterEndDate;
 
   // ==================== FETCH TRANSACTIONS ====================
 
@@ -46,6 +53,7 @@ class TransactionProvider extends ChangeNotifier {
   Future<void> fetchTransactions({
     int? page,
     int? limit,
+    String? search,
     String? type,
     String? categoryId,
     DateTime? startDate,
@@ -63,6 +71,7 @@ class TransactionProvider extends ChangeNotifier {
       final fetchedTransactions = await _transactionRepository.getTransactions(
         page: page,
         limit: limit ?? 50,
+        search: search ?? _searchQuery,
         type: type ?? _filterType,
         categoryId: categoryId ?? _filterCategoryId,
         startDate: startDate ?? _filterStartDate,
@@ -280,38 +289,43 @@ class TransactionProvider extends ChangeNotifier {
 
   // ==================== FILTERS ====================
 
-  /// Set filter type (income/expense)
-  void setFilterType(String? type) {
+  /// Apply filters and search
+  void applyFilters({
+    String? search,
+    String? type,
+    String? categoryId,
+    DateTime? startDate,
+    DateTime? endDate,
+  }) {
+    _searchQuery = search;
     _filterType = type;
-    notifyListeners();
-  }
-
-  /// Set filter category
-  void setFilterCategory(String? categoryId) {
     _filterCategoryId = categoryId;
-    notifyListeners();
-  }
-
-  /// Set filter date range
-  void setFilterDateRange(DateTime? startDate, DateTime? endDate) {
     _filterStartDate = startDate;
     _filterEndDate = endDate;
-    notifyListeners();
+    
+    // Reload transactions with new filters
+    fetchTransactions(refresh: true);
   }
 
   /// Clear all filters
   void clearFilters() {
+    _searchQuery = null;
     _filterType = null;
     _filterCategoryId = null;
     _filterStartDate = null;
     _filterEndDate = null;
-    notifyListeners();
+    
+    // Reload transactions without filters
+    fetchTransactions(refresh: true);
   }
 
-  /// Apply current filters
-  Future<void> applyFilters() async {
-    await fetchTransactions(refresh: true);
-    await fetchSummary();
+  /// Check if any filters are active
+  bool get hasActiveFilters {
+    return _searchQuery != null ||
+        _filterType != null ||
+        _filterCategoryId != null ||
+        _filterStartDate != null ||
+        _filterEndDate != null;
   }
 
   // ==================== REFRESH ALL DATA ====================

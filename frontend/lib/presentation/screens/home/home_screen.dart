@@ -4,6 +4,7 @@ import '../../providers/auth_provider.dart';
 import '../../providers/transaction_provider.dart';
 import '../../providers/category_provider.dart';
 import '../../providers/budget_provider.dart';
+import '../../providers/notification_provider.dart';
 import '../transactions/add_edit_transaction_screen.dart';
 import '../transactions/transaction_list_screen.dart';
 import '../categories/category_list_screen.dart';
@@ -32,9 +33,11 @@ class _HomeScreenState extends State<HomeScreen> {
   Future<void> _loadData() async {
     final transactionProvider = context.read<TransactionProvider>();
     final budgetProvider = context.read<BudgetProvider>();
+    final notificationProvider = context.read<NotificationProvider>();
     await Future.wait([
       transactionProvider.refreshAll(),
       budgetProvider.fetchBudgets(refresh: true),
+      notificationProvider.loadUnreadCount(), // Load notification count
     ]);
   }
 
@@ -611,9 +614,32 @@ class _HomeScreenState extends State<HomeScreen> {
           ListTile(
             leading: const Icon(Icons.notifications_outlined),
             title: const Text('Notifications'),
+            trailing: Consumer<NotificationProvider>(
+              builder: (context, notificationProvider, child) {
+                final unreadCount = notificationProvider.unreadCount;
+                if (unreadCount > 0) {
+                  return Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: Colors.red,
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Text(
+                      unreadCount > 99 ? '99+' : unreadCount.toString(),
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 12,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  );
+                }
+                return const SizedBox.shrink();
+              },
+            ),
             onTap: () {
               Navigator.pop(context);
-              // TODO: Navigate to notifications
+              Navigator.pushNamed(context, '/notifications');
             },
           ),
           const Divider(),
@@ -622,7 +648,7 @@ class _HomeScreenState extends State<HomeScreen> {
             title: const Text('Settings'),
             onTap: () {
               Navigator.pop(context);
-              // TODO: Navigate to settings
+              Navigator.pushNamed(context, '/settings');
             },
           ),
           ListTile(

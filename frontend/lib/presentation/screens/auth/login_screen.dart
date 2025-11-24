@@ -6,6 +6,7 @@ import '../../widgets/common/custom_text_field.dart';
 import '../../../core/constants/app_strings.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/utils/validators.dart';
+import '../home/home_screen.dart';
 import 'register_screen.dart';
 
 class LoginScreen extends StatefulWidget {
@@ -41,7 +42,15 @@ class _LoginScreenState extends State<LoginScreen> {
       password: _passwordController.text,
     );
 
-    if (!success) {
+    if (!mounted) return;
+
+    if (success) {
+      // Navigate to home screen after successful login
+      Navigator.of(context).pushAndRemoveUntil(
+        MaterialPageRoute(builder: (context) => const HomeScreen()),
+        (route) => false,
+      );
+    } else {
       // Show error notification
       String errorMessage = authProvider.errorMessage ?? AppStrings.loginError;
       

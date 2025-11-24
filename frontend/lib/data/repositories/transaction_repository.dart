@@ -31,7 +31,7 @@ class TransactionRepository {
           'category': categoryId,
           'date': date.toIso8601String(),
           if (description != null) 'description': description,
-          if (paymentMethod != null) 'payment_method': paymentMethod,
+          if (paymentMethod != null) 'paymentMethod': paymentMethod,
           if (tags != null) 'tags': tags,
         },
       );
@@ -49,6 +49,7 @@ class TransactionRepository {
   Future<List<TransactionModel>> getTransactions({
     int? page,
     int? limit,
+    String? search,
     String? type,
     String? categoryId,
     DateTime? startDate,
@@ -61,6 +62,7 @@ class TransactionRepository {
 
       if (page != null) queryParams[ApiConstants.pageParam] = page;
       if (limit != null) queryParams[ApiConstants.limitParam] = limit;
+      if (search != null && search.isNotEmpty) queryParams['search'] = search;
       if (type != null) queryParams[ApiConstants.typeParam] = type;
       if (categoryId != null) {
         queryParams[ApiConstants.categoryParam] = categoryId;
@@ -124,7 +126,7 @@ class TransactionRepository {
       if (categoryId != null) data['category'] = categoryId;
       if (date != null) data['date'] = date.toIso8601String();
       if (description != null) data['description'] = description;
-      if (paymentMethod != null) data['payment_method'] = paymentMethod;
+      if (paymentMethod != null) data['paymentMethod'] = paymentMethod;
       if (tags != null) data['tags'] = tags;
 
       final response = await _apiService.put(

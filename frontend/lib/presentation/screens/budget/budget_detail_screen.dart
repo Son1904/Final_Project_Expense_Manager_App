@@ -215,8 +215,8 @@ class _BudgetDetailScreenState extends State<BudgetDetailScreen> {
             : Colors.red;
 
     final currencyFormat = NumberFormat.currency(
-      locale: 'vi_VN',
-      symbol: 'VND',
+      locale: 'en_US',
+      symbol: '\$',
       decimalDigits: 0,
     );
 
@@ -378,8 +378,8 @@ class _BudgetDetailScreenState extends State<BudgetDetailScreen> {
 
   Widget _buildStatisticsCard(BudgetModel budget) {
     final currencyFormat = NumberFormat.currency(
-      locale: 'vi_VN',
-      symbol: 'VND',
+      locale: 'en_US',
+      symbol: '\$',
       decimalDigits: 0,
     );
 
@@ -561,7 +561,7 @@ class _BudgetDetailScreenState extends State<BudgetDetailScreen> {
                               ],
                             ),
                             Text(
-                              '${NumberFormat.currency(locale: 'vi_VN', symbol: 'VND', decimalDigits: 0).format(spent)} (${percentage.toStringAsFixed(1)}%)',
+                              '${NumberFormat.currency(locale: 'en_US', symbol: '\$', decimalDigits: 0).format(spent)} (${percentage.toStringAsFixed(1)}%)',
                               style: const TextStyle(fontWeight: FontWeight.bold),
                             ),
                           ],
@@ -612,8 +612,8 @@ class _BudgetDetailScreenState extends State<BudgetDetailScreen> {
         transactions.sort((a, b) => b.date.compareTo(a.date));
 
         final currencyFormat = NumberFormat.currency(
-          locale: 'vi_VN',
-          symbol: 'VND',
+          locale: 'en_US',
+          symbol: '\$',
           decimalDigits: 0,
         );
 

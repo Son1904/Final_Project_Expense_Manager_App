@@ -1,6 +1,19 @@
+import 'package:flutter/foundation.dart' show kIsWeb;
+
 class ApiConstants {
-  // Base URL
-  static const String baseUrl = 'http://localhost:3000';
+  // Base URL - Automatically detects platform
+  // Web (Edge, Chrome, etc.) -> localhost:3000
+  // Android Emulator -> 10.0.2.2:3000
+  // Physical device -> Use your machine's IP (192.168.x.x)
+  static String get baseUrl {
+    if (kIsWeb) {
+      // Web browsers use localhost
+      return 'http://localhost:3000';
+    } else {
+      // Mobile: Android emulator uses special IP to access host
+      return 'http://10.0.2.2:3000';
+    }
+  }
   static const String apiVersion = '/api';
   
   // Endpoints

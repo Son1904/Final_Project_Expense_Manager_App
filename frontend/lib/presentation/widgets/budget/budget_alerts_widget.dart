@@ -116,8 +116,8 @@ class BudgetAlertsWidget extends StatelessWidget {
     final statusColor = isExceeded ? AppColors.danger : AppColors.warning;
     final statusText = isExceeded ? 'Exceeded' : 'Warning';
     final currencyFormat = NumberFormat.currency(
-      locale: 'vi_VN',
-      symbol: 'VND',
+      locale: 'en_US',
+      symbol: '\$',
       decimalDigits: 0,
     );
 

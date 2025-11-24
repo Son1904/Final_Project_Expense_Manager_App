@@ -32,12 +32,10 @@ dependencies:
   # Charts & Graphs
   fl_chart: ^0.65.0
   
-  # SMS Banking Integration (Android only)
-  permission_handler: ^11.0.0  # Request SMS permissions
-  telephony: ^0.2.0            # Listen to SMS messages
-  
   # Utils
   logger: ^2.0.2
+  universal_html: ^2.2.4
+  path_provider: ^2.1.1  # For getting app directories on mobile
 
 dev_dependencies:
   flutter_test:

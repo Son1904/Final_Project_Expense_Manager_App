@@ -83,14 +83,6 @@ transactionSchema.index({ userId: 1, date: -1 });
 transactionSchema.index({ userId: 1, type: 1, date: -1 });
 transactionSchema.index({ userId: 1, category: 1 });
 
-// Virtual for formatted amount
-transactionSchema.virtual('formattedAmount').get(function () {
-  return new Intl.NumberFormat('vi-VN', {
-    style: 'currency',
-    currency: 'VND',
-  }).format(this.amount);
-});
-
 // Pre-save middleware to validate recurring config
 transactionSchema.pre('save', function (next) {
   if (this.isRecurring && !this.recurringConfig?.frequency) {

@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import '../../providers/transaction_provider.dart';
 import '../../providers/category_provider.dart';
+import '../../providers/notification_provider.dart';
 import '../../widgets/common/custom_button.dart';
 import '../../widgets/common/custom_text_field.dart';
 import '../../../core/constants/app_colors.dart';
@@ -31,7 +32,7 @@ class _AddEditTransactionScreenState extends State<AddEditTransactionScreen> {
 
   String _selectedType = 'expense';
   String? _selectedCategoryId;
-  String? _selectedPaymentMethod;
+  String? _selectedPaymentMethod = 'cash'; // Default payment method (lowercase to match backend)
   DateTime _selectedDate = DateTime.now();
 
   bool get isEditMode => widget.transaction != null;
@@ -147,6 +148,10 @@ class _AddEditTransactionScreenState extends State<AddEditTransactionScreen> {
     if (!mounted) return;
 
     if (success) {
+      // Reload notifications to show new budget alerts
+      final notificationProvider = context.read<NotificationProvider>();
+      notificationProvider.loadUnreadCount();
+      
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
@@ -251,10 +256,10 @@ class _AddEditTransactionScreenState extends State<AddEditTransactionScreen> {
 
   Widget _buildPaymentMethodSelector() {
     const paymentMethods = [
-      {'value': 'Cash', 'label': 'Cash', 'icon': Icons.money},
-      {'value': 'Bank', 'label': 'Bank', 'icon': Icons.account_balance},
-      {'value': 'Credit Card', 'label': 'Credit Card', 'icon': Icons.credit_card},
-      {'value': 'E-Wallet', 'label': 'E-Wallet', 'icon': Icons.wallet},
+      {'value': 'cash', 'label': 'Cash', 'icon': Icons.money},
+      {'value': 'bank_transfer', 'label': 'Bank Transfer', 'icon': Icons.account_balance},
+      {'value': 'credit_card', 'label': 'Credit Card', 'icon': Icons.credit_card},
+      {'value': 'e_wallet', 'label': 'E-Wallet', 'icon': Icons.wallet},
     ];
 
     return Container(

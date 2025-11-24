@@ -12,12 +12,17 @@ import 'presentation/providers/auth_provider.dart';
 import 'presentation/providers/transaction_provider.dart';
 import 'presentation/providers/category_provider.dart';
 import 'presentation/providers/budget_provider.dart';
+import 'presentation/providers/notification_provider.dart';
 import 'presentation/screens/auth/login_screen.dart';
+import 'presentation/screens/notifications/notification_screen.dart';
 import 'presentation/screens/home/home_screen.dart';
 import 'presentation/screens/budget/budget_list_screen.dart';
 import 'presentation/screens/budget/budget_detail_screen.dart';
 import 'presentation/screens/budget/add_edit_budget_screen.dart';
 import 'presentation/screens/transactions/add_edit_transaction_screen.dart';
+import 'presentation/screens/settings/settings_screen.dart';
+import 'presentation/screens/settings/change_password_screen.dart';
+import 'presentation/screens/settings/notification_settings_screen.dart';
 import 'data/models/budget_model.dart';
 import 'data/models/transaction_model.dart';
 
@@ -66,11 +71,14 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MultiProvider(
       providers: [
+        Provider<ApiService>.value(
+          value: apiService,
+        ),
         ChangeNotifierProvider(
           create: (_) => AuthProvider(
             authRepository: authRepository,
             storageService: storageService,
-            apiService: ApiService(),
+            apiService: apiService,
           )..initialize(),
         ),
         ChangeNotifierProvider(
@@ -88,6 +96,11 @@ class MyApp extends StatelessWidget {
             budgetService: BudgetService(apiService),
           ),
         ),
+        ChangeNotifierProvider(
+          create: (_) => NotificationProvider(
+            apiService: apiService,
+          ),
+        ),
       ],
       child: Consumer<AuthProvider>(
         builder: (context, authProvider, _) {
@@ -97,6 +110,10 @@ class MyApp extends StatelessWidget {
             theme: AppTheme.lightTheme,
             routes: {
               '/budgets': (context) => const BudgetListScreen(),
+              '/notifications': (context) => const NotificationScreen(),
+              '/settings': (context) => const SettingsScreen(),
+              '/settings/change-password': (context) => const ChangePasswordScreen(),
+              '/settings/notifications': (context) => const NotificationSettingsScreen(),
             },
             onGenerateRoute: (settings) {
               // Handle routes with parameters

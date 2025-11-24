@@ -6,6 +6,9 @@ import 'add_edit_transaction_screen.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/utils/formatters.dart';
 import '../../../data/models/transaction_model.dart';
+import '../../../data/services/api_service.dart';
+import '../../../core/utils/csv_helper.dart';
+import 'dart:async';
 
 class TransactionListScreen extends StatefulWidget {
   const TransactionListScreen({super.key});
@@ -15,6 +18,8 @@ class TransactionListScreen extends StatefulWidget {
 }
 
 class _TransactionListScreenState extends State<TransactionListScreen> {
+  final TextEditingController _searchController = TextEditingController();
+  Timer? _debounce;
   String? _selectedType;
   String? _selectedCategoryId;
   DateTime? _startDate;
@@ -23,8 +28,23 @@ class _TransactionListScreenState extends State<TransactionListScreen> {
   @override
   void initState() {
     super.initState();
+    _searchController.addListener(_onSearchChanged);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _loadData();
+    });
+  }
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    _debounce?.cancel();
+    super.dispose();
+  }
+
+  void _onSearchChanged() {
+    if (_debounce?.isActive ?? false) _debounce!.cancel();
+    _debounce = Timer(const Duration(milliseconds: 500), () {
+      _applyFilters();
     });
   }
 
@@ -39,22 +59,25 @@ class _TransactionListScreenState extends State<TransactionListScreen> {
   }
 
   Future<void> _applyFilters() async {
-    final transactionProvider = context.read<TransactionProvider>();
-    transactionProvider.setFilterType(_selectedType);
-    transactionProvider.setFilterCategory(_selectedCategoryId);
-    transactionProvider.setFilterDateRange(_startDate, _endDate);
-    await transactionProvider.applyFilters();
+    final search = _searchController.text.trim();
+    context.read<TransactionProvider>().applyFilters(
+      search: search.isEmpty ? null : search,
+      type: _selectedType,
+      categoryId: _selectedCategoryId,
+      startDate: _startDate,
+      endDate: _endDate,
+    );
   }
 
   void _clearFilters() {
     setState(() {
+      _searchController.clear();
       _selectedType = null;
       _selectedCategoryId = null;
       _startDate = null;
       _endDate = null;
     });
     context.read<TransactionProvider>().clearFilters();
-    _loadData();
   }
 
   Future<void> _selectDateRange() async {
@@ -79,8 +102,9 @@ class _TransactionListScreenState extends State<TransactionListScreen> {
 
     if (picked != null) {
       setState(() {
-        _startDate = picked.start;
-        _endDate = picked.end;
+        // Set to start of day (00:00:00) and end of day (23:59:59.999)
+        _startDate = DateTime(picked.start.year, picked.start.month, picked.start.day, 0, 0, 0, 0);
+        _endDate = DateTime(picked.end.year, picked.end.month, picked.end.day, 23, 59, 59, 999);
       });
       await _applyFilters();
     }
@@ -205,6 +229,113 @@ class _TransactionListScreenState extends State<TransactionListScreen> {
     }
   }
 
+  Future<void> _exportData() async {
+    // Show date range picker
+    final DateTimeRange? dateRange = await showDateRangePicker(
+      context: context,
+      firstDate: DateTime(2020),
+      lastDate: DateTime.now(),
+      builder: (context, child) {
+        return Theme(
+          data: Theme.of(context).copyWith(
+            colorScheme: ColorScheme.light(
+              primary: AppColors.primary,
+            ),
+          ),
+          child: child!,
+        );
+      },
+    );
+
+    if (dateRange == null) return;
+
+    if (!mounted) return;
+
+    // Show loading
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Row(
+          children: [
+            SizedBox(
+              width: 20,
+              height: 20,
+              child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+            ),
+            SizedBox(width: 12),
+            Text('Exporting transactions...'),
+          ],
+        ),
+        duration: Duration(seconds: 30),
+      ),
+    );
+
+    try {
+      final apiService = context.read<ApiService>();
+      
+      // Build query params with current filters
+      final transactionProvider = context.read<TransactionProvider>();
+      final params = <String, String>{
+        'startDate': dateRange.start.toIso8601String(),
+        'endDate': dateRange.end.toIso8601String(),
+      };
+
+      if (transactionProvider.filterType != null) {
+        params['type'] = transactionProvider.filterType!;
+      }
+      if (transactionProvider.filterCategoryId != null) {
+        params['category'] = transactionProvider.filterCategoryId!;
+      }
+      if (transactionProvider.searchQuery != null && transactionProvider.searchQuery!.isNotEmpty) {
+        params['search'] = transactionProvider.searchQuery!;
+      }
+      
+      final queryString = params.entries.map((e) => '${e.key}=${Uri.encodeComponent(e.value)}').join('&');
+      
+      final response = await apiService.get('/api/transactions/export?$queryString');
+
+      // Hide loading
+      if (mounted) {
+        ScaffoldMessenger.of(context).clearSnackBars();
+      }
+
+      // Download CSV file
+      if (response.data is String) {
+        final csv = response.data as String;
+        final transactionCount = csv.split('\n').length - 1;
+        
+        // Generate filename with date range and filters
+        final filename = 'transactions_${dateRange.start.toIso8601String().split('T')[0]}_to_${dateRange.end.toIso8601String().split('T')[0]}.csv';
+        
+        // Download file
+        final filePath = await CsvHelper.downloadCsv(csv, filename);
+        
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                filePath != null 
+                  ? 'Saved $transactionCount transactions to:\n$filePath'
+                  : 'Downloaded $transactionCount transactions'
+              ),
+              backgroundColor: AppColors.success,
+              duration: const Duration(seconds: 4),
+            ),
+          );
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).clearSnackBars();
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(e.toString().replaceAll('Exception: ', '')),
+            backgroundColor: AppColors.danger,
+          ),
+        );
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -219,11 +350,23 @@ class _TransactionListScreenState extends State<TransactionListScreen> {
           PopupMenuButton<String>(
             icon: const Icon(Icons.more_vert),
             onSelected: (value) {
-              if (value == 'clear_all') {
+              if (value == 'export') {
+                _exportData();
+              } else if (value == 'clear_all') {
                 _showClearAllConfirmDialog();
               }
             },
             itemBuilder: (context) => [
+              const PopupMenuItem(
+                value: 'export',
+                child: Row(
+                  children: [
+                    Icon(Icons.file_download, color: AppColors.primary),
+                    SizedBox(width: 8),
+                    Text('Export CSV'),
+                  ],
+                ),
+              ),
               const PopupMenuItem(
                 value: 'clear_all',
                 child: Row(
@@ -240,6 +383,31 @@ class _TransactionListScreenState extends State<TransactionListScreen> {
       ),
       body: Column(
         children: [
+          // Search Bar
+          Container(
+            padding: const EdgeInsets.all(16),
+            color: Colors.white,
+            child: TextField(
+              controller: _searchController,
+              decoration: InputDecoration(
+                hintText: 'Search transactions...',
+                prefixIcon: const Icon(Icons.search),
+                suffixIcon: _searchController.text.isNotEmpty
+                    ? IconButton(
+                        icon: const Icon(Icons.clear),
+                        onPressed: () {
+                          _searchController.clear();
+                        },
+                      )
+                    : null,
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              ),
+            ),
+          ),
+
           // Active Filters
           if (_hasActiveFilters()) _buildActiveFilters(),
 
@@ -344,7 +512,8 @@ class _TransactionListScreenState extends State<TransactionListScreen> {
   }
 
   bool _hasActiveFilters() {
-    return _selectedType != null ||
+    return _searchController.text.isNotEmpty ||
+        _selectedType != null ||
         _selectedCategoryId != null ||
         _startDate != null ||
         _endDate != null;
@@ -361,6 +530,13 @@ class _TransactionListScreenState extends State<TransactionListScreen> {
               spacing: 8,
               runSpacing: 8,
               children: [
+                if (_searchController.text.isNotEmpty)
+                  _buildFilterChip(
+                    label: 'Search: "${_searchController.text}"',
+                    onRemove: () {
+                      _searchController.clear();
+                    },
+                  ),
                 if (_selectedType != null)
                   _buildFilterChip(
                     label: _selectedType == 'income' ? 'Income' : 'Expense',
@@ -502,16 +678,6 @@ class _TransactionListScreenState extends State<TransactionListScreen> {
                         ),
                       ],
                     ),
-                    if (transaction.paymentMethod != null) ...[
-                      const SizedBox(height: 4),
-                      Text(
-                        transaction.paymentMethod!,
-                        style: TextStyle(
-                          color: AppColors.textSecondary.withOpacity(0.7),
-                          fontSize: 12,
-                        ),
-                      ),
-                    ],
                   ],
                 ),
               ),

@@ -7,6 +7,8 @@
 
 const { Budget, Transaction } = require('../models');
 const { AppError, asyncHandler } = require('../middleware/error.middleware');
+const { createNotification } = require('./notificationController');
+const { isNotificationEnabled } = require('./settingsController');
 
 /**
  * Create a new budget
@@ -78,6 +80,9 @@ const createBudget = asyncHandler(async (req, res) => {
 
   // Populate categories
   await budget.populate('categories', 'name icon color');
+
+  // Check if budget needs alert after creation
+  await checkBudgetAlert(budget);
 
   res.status(201).json({
     status: 'success',
@@ -401,6 +406,108 @@ const refreshAllBudgets = asyncHandler(async (req, res) => {
   });
 });
 
+/**
+ * Helper function to check budget alert and create notification
+ * @param {Object} budget - Budget object
+ */
+async function checkBudgetAlert(budget) {
+  if (!budget.alertEnabled) return;
+
+  const percentageUsed = (budget.spent / budget.amount) * 100;
+  const userId = budget.userId.toString();
+
+  console.log(`🔔 Checking alert for budget ${budget.name}: ${percentageUsed.toFixed(1)}% used`);
+
+  try {
+    // Budget exceeded (100%+)
+    if (percentageUsed >= 100) {
+      const overAmount = budget.spent - budget.amount;
+      const isEnabled = await isNotificationEnabled(userId, 'BUDGET_EXCEEDED');
+      if (isEnabled) {
+        await createNotification(userId, {
+          type: 'BUDGET_EXCEEDED',
+          title: `${budget.name} budget exceeded`,
+          message: `You've exceeded your ${budget.name} budget by ${formatCurrency(overAmount)}`,
+          priority: 'HIGH',
+          referenceType: 'BUDGET',
+          referenceId: budget._id.toString(),
+          metadata: {
+            budgetName: budget.name,
+            budgetAmount: budget.amount,
+            spent: budget.spent,
+            overAmount: overAmount,
+            percentageUsed: percentageUsed.toFixed(1)
+          }
+        });
+        console.log('✅ Created BUDGET_EXCEEDED notification');
+      } else {
+        console.log('ℹ️  BUDGET_EXCEEDED notification skipped (disabled by user)');
+      }
+    }
+    // Budget warning (80%+)
+    else if (percentageUsed >= budget.alertThreshold) {
+      const isEnabled = await isNotificationEnabled(userId, 'BUDGET_WARNING');
+      if (isEnabled) {
+        await createNotification(userId, {
+          type: 'BUDGET_WARNING',
+          title: `${budget.name} budget warning`,
+          message: `You've used ${percentageUsed.toFixed(0)}% of your ${budget.name} budget (${formatCurrency(budget.spent)}/${formatCurrency(budget.amount)})`,
+          priority: 'MEDIUM',
+          referenceType: 'BUDGET',
+          referenceId: budget._id.toString(),
+          metadata: {
+            budgetName: budget.name,
+            budgetAmount: budget.amount,
+            spent: budget.spent,
+            percentageUsed: percentageUsed.toFixed(1),
+            alertThreshold: budget.alertThreshold
+          }
+        });
+        console.log('✅ Created BUDGET_WARNING notification');
+      } else {
+        console.log('ℹ️  BUDGET_WARNING notification skipped (disabled by user)');
+      }
+    }
+    // Budget on track (<50%)
+    else if (percentageUsed < 50) {
+      const isEnabled = await isNotificationEnabled(userId, 'BUDGET_ON_TRACK');
+      if (isEnabled) {
+        await createNotification(userId, {
+          type: 'BUDGET_ON_TRACK',
+          title: `${budget.name} budget on track`,
+          message: `Great job! You've only used ${percentageUsed.toFixed(0)}% of your ${budget.name} budget`,
+          priority: 'LOW',
+          referenceType: 'BUDGET',
+          referenceId: budget._id.toString(),
+          metadata: {
+            budgetName: budget.name,
+            budgetAmount: budget.amount,
+            spent: budget.spent,
+            percentageUsed: percentageUsed.toFixed(1)
+          }
+        });
+        console.log('✅ Created BUDGET_ON_TRACK notification');
+      } else {
+        console.log('ℹ️  BUDGET_ON_TRACK notification skipped (disabled by user)');
+      }
+    }
+  } catch (error) {
+    console.error('❌ Error creating budget notification:', error);
+  }
+}
+
+/**
+ * Helper function to format currency
+ * @param {number} amount
+ * @returns {string}
+ */
+function formatCurrency(amount) {
+  return new Intl.NumberFormat('en-US', {
+    style: 'currency',
+    currency: 'USD'
+  }).format(amount);
+}
+
 module.exports = {
   createBudget,
   getBudgets,
@@ -412,4 +519,5 @@ module.exports = {
   deleteBudgetPermanently,
   refreshBudget,
   refreshAllBudgets,
+  checkBudgetAlert,
 };

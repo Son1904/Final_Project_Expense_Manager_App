@@ -228,7 +228,7 @@ class _SpendingPieChartState extends State<SpendingPieChart> {
                           ),
                         ),
                         Text(
-                          '${data.total.toStringAsFixed(0)} VND (${percentage.toStringAsFixed(1)}%)',
+                          '\$${data.total.toStringAsFixed(0)} (${percentage.toStringAsFixed(1)}%)',
                           style: TextStyle(
                             fontSize: 12,
                             color: Colors.grey[600],
@@ -260,7 +260,7 @@ class _SpendingPieChartState extends State<SpendingPieChart> {
               const Icon(Icons.account_balance_wallet, color: Colors.blue, size: 20),
               const SizedBox(width: 8),
               Text(
-                'Total Spending: ${total.toStringAsFixed(0)} VND',
+                'Total Spending: \$${total.toStringAsFixed(0)}',
                 style: const TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.bold,

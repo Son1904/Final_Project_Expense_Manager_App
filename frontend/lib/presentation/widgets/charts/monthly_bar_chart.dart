@@ -224,7 +224,7 @@ class _MonthlyBarChartState extends State<MonthlyBarChart> {
                         ),
                         children: [
                           TextSpan(
-                            text: '$label: ${value.toStringAsFixed(0)} VND',
+                            text: '$label: \$${value.toStringAsFixed(0)}',
                             style: TextStyle(
                               color: isIncome ? Colors.greenAccent : Colors.redAccent,
                               fontSize: 12,
@@ -452,7 +452,7 @@ class _MonthlyBarChartState extends State<MonthlyBarChart> {
                 ),
               ),
               Text(
-                '${netSavings.abs().toStringAsFixed(0)} VND',
+                '\$${netSavings.abs().toStringAsFixed(0)}',
                 style: TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.bold,
@@ -485,7 +485,7 @@ class _MonthlyBarChartState extends State<MonthlyBarChart> {
         ),
         const SizedBox(height: 4),
         Text(
-          '${value.toStringAsFixed(0)} VND',
+          '\$${value.toStringAsFixed(0)}',
           style: TextStyle(
             fontSize: 14,
             fontWeight: FontWeight.bold,
