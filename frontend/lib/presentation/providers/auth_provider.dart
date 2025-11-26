@@ -1,3 +1,4 @@
+import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 import '../../data/models/user_model.dart';
 import '../../data/repositories/auth_repository.dart';
@@ -15,12 +16,14 @@ class AuthProvider extends ChangeNotifier {
   bool _isLoading = false;
   String? _errorMessage;
   bool _isAuthenticated = false;
+  bool _isInitialized = false;
 
   // Getters
   UserModel? get user => _user;
   bool get isLoading => _isLoading;
   String? get errorMessage => _errorMessage;
   bool get isAuthenticated => _isAuthenticated;
+  bool get isInitialized => _isInitialized;
 
   AuthProvider({
     required AuthRepository authRepository,
@@ -56,6 +59,7 @@ class AuthProvider extends ChangeNotifier {
     } catch (e) {
       _setError('Initialization failed: $e');
     } finally {
+      _isInitialized = true;
       _setLoading(false);
     }
   }
@@ -110,7 +114,21 @@ class AuthProvider extends ChangeNotifier {
       _setLoading(false);
       return true;
     } catch (e) {
-      _setError(e.toString());
+      String message = e.toString();
+      
+      if (e is DioException) {
+        final response = e.response;
+        if (response?.data != null) {
+          if (response!.data is Map) {
+            final data = response!.data as Map;
+            if (data['message'] != null) {
+              message = data['message'].toString();
+            }
+          }
+        }
+      }
+      
+      _setError(message);
       _setLoading(false);
       return false;
     }

@@ -45,15 +45,19 @@ class _LoginScreenState extends State<LoginScreen> {
     if (!mounted) return;
 
     if (success) {
-      // Navigate to home screen after successful login
-      Navigator.of(context).pushAndRemoveUntil(
-        MaterialPageRoute(builder: (context) => const HomeScreen()),
-        (route) => false,
-      );
+      // Login successful - Main.dart will handle navigation based on auth state
+      return;
     } else {
       // Show error notification
       String errorMessage = authProvider.errorMessage ?? AppStrings.loginError;
       
+      // Check for ban/suspension
+      if (errorMessage.toLowerCase().contains('suspended') || 
+          errorMessage.toLowerCase().contains('banned')) {
+        _showBanDialog(errorMessage);
+        return;
+      }
+
       // Customize message based on error
       if (errorMessage.toLowerCase().contains('password')) {
         errorMessage = 'Incorrect password. Please try again.';
@@ -86,7 +90,37 @@ class _LoginScreenState extends State<LoginScreen> {
         ),
       );
     }
-  }  @override
+  }
+
+  void _showBanDialog(String message) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Row(
+          children: [
+            Icon(Icons.block, color: Colors.red),
+            SizedBox(width: 8),
+            Text('Account Suspended'),
+          ],
+        ),
+        content: Text(message),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Close'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.pop(context);
+            },
+            child: const Text('OK'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
       body: SafeArea(

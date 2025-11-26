@@ -36,7 +36,7 @@ const authenticate = asyncHandler(async (req, res, next) => {
   // Fetch user from database
   const pool = getPgPool();
   const result = await pool.query(
-    'SELECT id, email, full_name, is_active FROM users WHERE id = $1',
+    'SELECT id, email, full_name, is_active, role FROM users WHERE id = $1',
     [decoded.userId]
   );
 
@@ -79,7 +79,7 @@ const optionalAuth = asyncHandler(async (req, res, next) => {
       const decoded = verifyAccessToken(token);
       const pool = getPgPool();
       const result = await pool.query(
-        'SELECT id, email, full_name, is_active FROM users WHERE id = $1 AND is_active = true',
+        'SELECT id, email, full_name, is_active, role FROM users WHERE id = $1 AND is_active = true',
         [decoded.userId]
       );
 

@@ -49,7 +49,7 @@ const register = asyncHandler(async (req, res) => {
 
   // Hash password using bcrypt
   const hashedPassword = await bcrypt.hash(password, 10);
-  
+
   // Generate unique UUID for user
   const userId = uuidv4();
 
@@ -123,7 +123,7 @@ const login = asyncHandler(async (req, res) => {
 
   // Find user by email
   const result = await pool.query(
-    'SELECT id, email, password_hash, full_name, phone, is_active FROM users WHERE email = $1',
+    'SELECT id, email, password_hash, full_name, phone, is_active, role, is_banned, ban_reason FROM users WHERE email = $1',
     [email.toLowerCase()]
   );
 
@@ -136,6 +136,11 @@ const login = asyncHandler(async (req, res) => {
   // Check if account is active
   if (!user.is_active) {
     throw new AppError('Account is deactivated. Please contact support.', 403);
+  }
+
+  // Check if account is banned
+  if (user.is_banned) {
+    throw new AppError(`Account suspended. Reason: ${user.ban_reason || 'Violation of terms'}`, 403);
   }
 
   // Verify password using bcrypt
@@ -176,6 +181,7 @@ const login = asyncHandler(async (req, res) => {
         email: user.email,
         fullName: user.full_name,
         phone: user.phone,
+        role: user.role,
       },
       accessToken,
       refreshToken,
@@ -348,7 +354,7 @@ const changePassword = asyncHandler(async (req, res) => {
     // Verify current password
     const isPasswordValid = await bcrypt.compare(currentPassword, user.password_hash);
     console.log('Password validation:', { isValid: isPasswordValid });
-    
+
     if (!isPasswordValid) {
       throw new AppError('Current password is incorrect', 401);
     }

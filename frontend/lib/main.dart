@@ -23,6 +23,10 @@ import 'presentation/screens/transactions/add_edit_transaction_screen.dart';
 import 'presentation/screens/settings/settings_screen.dart';
 import 'presentation/screens/settings/change_password_screen.dart';
 import 'presentation/screens/settings/notification_settings_screen.dart';
+import 'presentation/screens/admin/admin_dashboard_screen.dart';
+import 'presentation/screens/admin/user_management_screen.dart';
+import 'presentation/providers/admin_provider.dart';
+import 'data/services/admin_service.dart';
 import 'data/models/budget_model.dart';
 import 'data/models/transaction_model.dart';
 
@@ -101,10 +105,16 @@ class MyApp extends StatelessWidget {
             apiService: apiService,
           ),
         ),
+        ChangeNotifierProvider(
+          create: (_) => AdminProvider(
+            AdminService(apiService),
+          ),
+        ),
       ],
       child: Consumer<AuthProvider>(
         builder: (context, authProvider, _) {
           return MaterialApp(
+            key: ValueKey(authProvider.isAuthenticated), // Force rebuild on auth change
             title: AppStrings.appName, 
             debugShowCheckedModeBanner: false, 
             theme: AppTheme.lightTheme,
@@ -114,6 +124,7 @@ class MyApp extends StatelessWidget {
               '/settings': (context) => const SettingsScreen(),
               '/settings/change-password': (context) => const ChangePasswordScreen(),
               '/settings/notifications': (context) => const NotificationSettingsScreen(),
+              '/admin/users': (context) => const UserManagementScreen(),
             },
             onGenerateRoute: (settings) {
               // Handle routes with parameters
@@ -148,10 +159,12 @@ class MyApp extends StatelessWidget {
               }
               return null;
             },
-            home: authProvider.isLoading 
+            home: !authProvider.isInitialized 
               ? const Scaffold(body: Center(child: CircularProgressIndicator()))
-              : (authProvider.isAuthenticated && authProvider.user != null)
-                ? const HomeScreen()
+              : authProvider.isAuthenticated && authProvider.user != null
+                ? (authProvider.user!.isAdmin
+                    ? const AdminDashboardScreen()  // Admin → Dashboard
+                    : const HomeScreen())            // User → App
                 : const LoginScreen(),
           );
         },

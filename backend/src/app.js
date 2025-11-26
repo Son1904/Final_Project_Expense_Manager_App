@@ -13,7 +13,7 @@ app.use(helmet());
 
 // CORS configuration
 const corsOptions = {
-  origin: process.env.NODE_ENV === 'development' 
+  origin: process.env.NODE_ENV === 'development'
     ? true  // Allow all origins in development
     : (process.env.CORS_ORIGIN?.split(',') || ['http://localhost:3000']),
   credentials: true,
@@ -37,7 +37,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
 // HTTP request logger
 if (process.env.NODE_ENV === 'development') {
-  app.use(morgan('dev')); 
+  app.use(morgan('dev'));
 } else {
   app.use(morgan('combined', {
     stream: {
@@ -64,6 +64,7 @@ const categoryRoutes = require('./routes/category.routes');
 const budgetRoutes = require('./routes/budget.routes');
 const notificationRoutes = require('./routes/notification.routes');
 const settingsRoutes = require('./routes/settings.routes');
+const adminRoutes = require('./routes/admin.routes');
 
 app.use('/api/auth', authRoutes);
 app.use('/api/transactions', transactionRoutes);
@@ -71,6 +72,8 @@ app.use('/api/categories', categoryRoutes);
 app.use('/api/budgets', budgetRoutes);
 app.use('/api/notifications', notificationRoutes);
 app.use('/api/settings', settingsRoutes);
+app.use('/api/admin', adminRoutes);
+
 
 // Welcome route
 app.get('/', (req, res) => {

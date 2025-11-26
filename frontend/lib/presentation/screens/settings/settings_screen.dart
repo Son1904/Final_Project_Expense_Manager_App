@@ -451,10 +451,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     if (context.mounted) {
                       // Navigate to login and remove all previous routes
                       // This will trigger a complete app rebuild with fresh state
-                      Navigator.of(context).pushAndRemoveUntil(
-                        MaterialPageRoute(builder: (context) => const LoginScreen()),
-                        (route) => false,
-                      );
+                      // Navigator.of(context).pushAndRemoveUntil(
+                      //   MaterialPageRoute(builder: (context) => const LoginScreen()),
+                      //   (route) => false,
+                      // );
                     }
                   }
                 } else {
@@ -497,9 +497,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
             onPressed: () async {
               Navigator.pop(context);
               await context.read<AuthProvider>().logout();
-              if (context.mounted) {
-                Navigator.of(context).pushNamedAndRemoveUntil('/', (route) => false);
-              }
+              // if (context.mounted) {
+              //   Navigator.of(context).pushNamedAndRemoveUntil('/', (route) => false);
+              // }
             },
             style: ElevatedButton.styleFrom(
               backgroundColor: Colors.red,
