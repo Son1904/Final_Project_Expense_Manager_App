@@ -1,6 +1,6 @@
 const { getPgPool } = require('../config/database');
 const { AppError } = require('../middleware/error.middleware');
-const { Transaction, Budget } = require('../models');
+const { Transaction, Budget, Notification, Category } = require('../models');
 
 /**
  * Admin Controller - Minimal
@@ -18,13 +18,13 @@ exports.getSystemOverview = async (req, res, next) => {
 
         // Get user statistics (PostgreSQL)
         const userStats = await pool.query(`
-            SELECT 
-                COUNT(*) as total_users,
-                COUNT(CASE WHEN is_active = true THEN 1 END) as active_users,
-                COUNT(CASE WHEN created_at >= date_trunc('month', CURRENT_DATE) THEN 1 END) as new_users_this_month
+SELECT
+COUNT(*) as total_users,
+    COUNT(CASE WHEN is_active = true THEN 1 END) as active_users,
+    COUNT(CASE WHEN created_at >= date_trunc('month', CURRENT_DATE) THEN 1 END) as new_users_this_month
             FROM users
             WHERE role != 'admin'
-        `);
+    `);
 
         // Get transaction count (MongoDB)
         const totalTransactions = await Transaction.countDocuments();
@@ -62,10 +62,10 @@ exports.getAllUsers = async (req, res, next) => {
         const pool = getPgPool();
 
         let query = `
-            SELECT 
-                id, email, full_name, phone, role, is_active, 
-                is_banned, ban_reason,
-                created_at, last_login_at
+SELECT
+id, email, full_name, phone, role, is_active,
+    is_banned, ban_reason,
+    created_at, last_login_at
             FROM users
         `;
         let queryParams = [];
@@ -73,12 +73,12 @@ exports.getAllUsers = async (req, res, next) => {
 
         // Add search filter if provided
         if (search) {
-            query += ` WHERE (email ILIKE $${paramIndex} OR full_name ILIKE $${paramIndex})`;
-            queryParams.push(`%${search}%`);
+            query += ` WHERE(email ILIKE $${paramIndex} OR full_name ILIKE $${paramIndex})`;
+            queryParams.push(`% ${search}% `);
             paramIndex++;
         }
 
-        query += ` ORDER BY created_at DESC LIMIT $${paramIndex} OFFSET $${paramIndex + 1}`;
+        query += ` ORDER BY created_at DESC LIMIT $${paramIndex} OFFSET $${paramIndex + 1} `;
         queryParams.push(limit, offset);
 
         const result = await pool.query(query, queryParams);
@@ -88,7 +88,7 @@ exports.getAllUsers = async (req, res, next) => {
         let countParams = [];
         if (search) {
             countQuery += ' WHERE (email ILIKE $1 OR full_name ILIKE $1)';
-            countParams.push(`%${search}%`);
+            countParams.push(`% ${search}% `);
         }
         const countResult = await pool.query(countQuery, countParams);
 
@@ -175,9 +175,15 @@ exports.deleteUser = async (req, res, next) => {
             throw new AppError('Cannot delete an admin user', 403);
         }
 
-        // Delete user (cascade will handle related data if configured, otherwise might need manual cleanup)
-        // Assuming ON DELETE CASCADE is set up for foreign keys, or we soft delete.
-        // For now, let's try hard delete.
+        // 1. Delete related data in MongoDB first (to avoid orphaned data)
+        await Promise.all([
+            Transaction.deleteMany({ userId: id }),
+            Budget.deleteMany({ userId: id }),
+            Notification.deleteMany({ userId: id }),
+            Category.deleteMany({ userId: id, isDefault: false })
+        ]);
+
+        // 2. Delete user from PostgreSQL
         await pool.query('DELETE FROM users WHERE id = $1', [id]);
 
         res.status(200).json({

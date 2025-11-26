@@ -36,7 +36,7 @@ const authenticate = asyncHandler(async (req, res, next) => {
   // Fetch user from database
   const pool = getPgPool();
   const result = await pool.query(
-    'SELECT id, email, full_name, is_active, role FROM users WHERE id = $1',
+    'SELECT id, email, full_name, is_active, role, is_banned, ban_reason FROM users WHERE id = $1',
     [decoded.userId]
   );
 
@@ -45,6 +45,11 @@ const authenticate = asyncHandler(async (req, res, next) => {
   }
 
   const user = result.rows[0];
+
+  // Check if account is banned
+  if (user.is_banned) {
+    throw new AppError(`Account suspended. Reason: ${user.ban_reason || 'Violation of terms'}`, 403);
+  }
 
   // Check if account is active
   if (!user.is_active) {
