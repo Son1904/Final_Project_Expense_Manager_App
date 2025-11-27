@@ -50,7 +50,7 @@ class _AddEditTransactionScreenState extends State<AddEditTransactionScreen> {
     if (isEditMode) {
       _amountController.text = widget.transaction!.amount.toString();
       _descriptionController.text = widget.transaction!.description ?? '';
-      _selectedPaymentMethod = widget.transaction!.paymentMethod;
+      _selectedPaymentMethod = widget.transaction!.paymentMethod ?? 'cash';
       _selectedType = widget.transaction!.type;
       _selectedCategoryId = widget.transaction!.categoryId;
       _selectedDate = widget.transaction!.date;

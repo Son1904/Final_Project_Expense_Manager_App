@@ -33,7 +33,7 @@ class AuthProvider extends ChangeNotifier {
         _storageService = storageService,
         _apiService = apiService;
 
-  // ==================== INITIALIZE ====================
+  // INITIALIZE 
 
   /// Initialize auth state from storage
   Future<void> initialize() async {
@@ -64,7 +64,7 @@ class AuthProvider extends ChangeNotifier {
     }
   }
 
-  // ==================== REGISTER ====================
+  // REGISTER 
 
   /// Register new user
   Future<bool> register({
@@ -94,7 +94,7 @@ class AuthProvider extends ChangeNotifier {
     }
   }
 
-  // ==================== LOGIN ====================
+  // LOGIN 
 
   /// Login user
   Future<bool> login({
@@ -134,7 +134,7 @@ class AuthProvider extends ChangeNotifier {
     }
   }
 
-  // ==================== LOGOUT ====================
+  // LOGOUT 
 
   /// Logout user
   Future<void> logout() async {
@@ -151,7 +151,7 @@ class AuthProvider extends ChangeNotifier {
     }
   }
 
-  // ==================== GET PROFILE ====================
+  // GET PROFILE 
 
   /// Get current user profile
   Future<void> getProfile() async {
@@ -163,7 +163,7 @@ class AuthProvider extends ChangeNotifier {
     }
   }
 
-  // ==================== CHANGE PASSWORD ====================
+  // CHANGE PASSWORD 
 
   /// Change user password
   Future<void> changePassword({
@@ -187,7 +187,7 @@ class AuthProvider extends ChangeNotifier {
     }
   }
 
-  // ==================== REFRESH TOKEN ====================
+  // REFRESH TOKEN 
 
   /// Refresh access token
   Future<bool> refreshToken() async {
@@ -201,7 +201,7 @@ class AuthProvider extends ChangeNotifier {
     }
   }
 
-  // ==================== HELPER METHODS ====================
+  // HELPER METHODS 
 
   void _setLoading(bool value) {
     _isLoading = value;

@@ -10,7 +10,7 @@ class TransactionRepository {
   TransactionRepository({required ApiService apiService})
       : _apiService = apiService;
 
-  // ==================== CREATE TRANSACTION ====================
+  // CREATE TRANSACTION 
 
   /// Create new transaction
   Future<TransactionModel> createTransaction({
@@ -43,7 +43,7 @@ class TransactionRepository {
     }
   }
 
-  // ==================== GET TRANSACTIONS ====================
+  // GET TRANSACTIONS 
 
   /// Get all transactions with filters
   Future<List<TransactionModel>> getTransactions({
@@ -90,7 +90,7 @@ class TransactionRepository {
     }
   }
 
-  // ==================== GET TRANSACTION BY ID ====================
+  // GET TRANSACTION BY ID 
 
   /// Get single transaction by ID
   Future<TransactionModel> getTransactionById(String id) async {
@@ -105,7 +105,7 @@ class TransactionRepository {
     }
   }
 
-  // ==================== UPDATE TRANSACTION ====================
+  // UPDATE TRANSACTION 
 
   /// Update transaction
   Future<TransactionModel> updateTransaction({
@@ -141,7 +141,7 @@ class TransactionRepository {
     }
   }
 
-  // ==================== DELETE TRANSACTION ====================
+  // DELETE TRANSACTION 
 
   /// Delete transaction
   Future<void> deleteTransaction(String id) async {
@@ -152,7 +152,7 @@ class TransactionRepository {
     }
   }
 
-  // ==================== GET SUMMARY ====================
+  // GET SUMMARY 
 
   /// Get transaction summary (income, expense, balance)
   Future<Map<String, dynamic>> getSummary({
@@ -180,7 +180,7 @@ class TransactionRepository {
     }
   }
 
-  // ==================== GET SPENDING BY CATEGORY ====================
+  // GET SPENDING BY CATEGORY 
 
   /// Get spending grouped by category
   Future<List<Map<String, dynamic>>> getSpendingByCategory({
@@ -209,7 +209,7 @@ class TransactionRepository {
     }
   }
 
-  // ==================== ERROR HANDLING ====================
+  // ERROR HANDLING 
 
   /// Handle Dio errors
   String _handleError(DioException error) {

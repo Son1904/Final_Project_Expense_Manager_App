@@ -9,7 +9,7 @@ class BudgetProvider extends ChangeNotifier {
   BudgetProvider({required BudgetService budgetService})
       : _budgetService = budgetService;
 
-  // ==================== STATE ====================
+  // STATE 
 
   List<BudgetModel> _budgets = [];
   List<BudgetModel> get budgets => _budgets;
@@ -36,7 +36,7 @@ class BudgetProvider extends ChangeNotifier {
   bool? get filterActive => _filterActive;
   String? get filterCategoryId => _filterCategoryId;
 
-  // ==================== GETTERS ====================
+  // GETTERS 
 
   /// Get active budgets only
   List<BudgetModel> get activeBudgets {
@@ -61,7 +61,7 @@ class BudgetProvider extends ChangeNotifier {
     return {'ok': ok, 'warning': warning, 'exceeded': exceeded};
   }
 
-  // ==================== FETCH BUDGETS ====================
+  // FETCH BUDGETS 
 
   /// Fetch all budgets with optional filters
   Future<void> fetchBudgets({
@@ -166,7 +166,7 @@ class BudgetProvider extends ChangeNotifier {
     }
   }
 
-  // ==================== CREATE BUDGET ====================
+  // CREATE BUDGET 
 
   /// Create a new budget
   Future<bool> createBudget(CreateBudgetRequest request) async {
@@ -186,7 +186,7 @@ class BudgetProvider extends ChangeNotifier {
     }
   }
 
-  // ==================== UPDATE BUDGET ====================
+  // UPDATE BUDGET 
 
   /// Update an existing budget
   Future<bool> updateBudget(String budgetId, UpdateBudgetRequest request) async {
@@ -217,7 +217,7 @@ class BudgetProvider extends ChangeNotifier {
     }
   }
 
-  // ==================== DELETE BUDGET ====================
+  // DELETE BUDGET 
 
   /// Delete a budget (soft delete)
   Future<bool> deleteBudget(String budgetId) async {
@@ -271,7 +271,7 @@ class BudgetProvider extends ChangeNotifier {
     }
   }
 
-  // ==================== REFRESH BUDGETS ====================
+  // REFRESH BUDGETS 
 
   /// Refresh spent amount for a budget
   Future<bool> refreshBudget(String budgetId) async {
@@ -322,7 +322,7 @@ class BudgetProvider extends ChangeNotifier {
     }
   }
 
-  // ==================== FILTERS ====================
+  // FILTERS 
 
   /// Set period filter
   void setPeriodFilter(String? period) {
@@ -350,7 +350,7 @@ class BudgetProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  // ==================== SELECTED BUDGET ====================
+  // SELECTED BUDGET 
 
   /// Set selected budget
   void setSelectedBudget(BudgetModel? budget) {
@@ -364,7 +364,7 @@ class BudgetProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  // ==================== HELPER METHODS ====================
+  // HELPER METHODS 
 
   void _setLoading(bool loading) {
     _isLoading = loading;

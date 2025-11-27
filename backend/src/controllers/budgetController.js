@@ -416,7 +416,7 @@ async function checkBudgetAlert(budget) {
   const percentageUsed = (budget.spent / budget.amount) * 100;
   const userId = budget.userId.toString();
 
-  console.log(`🔔 Checking alert for budget ${budget.name}: ${percentageUsed.toFixed(1)}% used`);
+  console.log(`Checking alert for budget ${budget.name}: ${percentageUsed.toFixed(1)}% used`);
 
   try {
     // Budget exceeded (100%+)
@@ -439,9 +439,9 @@ async function checkBudgetAlert(budget) {
             percentageUsed: percentageUsed.toFixed(1)
           }
         });
-        console.log('✅ Created BUDGET_EXCEEDED notification');
+        console.log('Created BUDGET_EXCEEDED notification');
       } else {
-        console.log('ℹ️  BUDGET_EXCEEDED notification skipped (disabled by user)');
+        console.log('ℹBUDGET_EXCEEDED notification skipped (disabled by user)');
       }
     }
     // Budget warning (80%+)
@@ -463,9 +463,9 @@ async function checkBudgetAlert(budget) {
             alertThreshold: budget.alertThreshold
           }
         });
-        console.log('✅ Created BUDGET_WARNING notification');
+        console.log('Created BUDGET_WARNING notification');
       } else {
-        console.log('ℹ️  BUDGET_WARNING notification skipped (disabled by user)');
+        console.log('ℹBUDGET_WARNING notification skipped (disabled by user)');
       }
     }
     // Budget on track (<50%)
@@ -486,13 +486,13 @@ async function checkBudgetAlert(budget) {
             percentageUsed: percentageUsed.toFixed(1)
           }
         });
-        console.log('✅ Created BUDGET_ON_TRACK notification');
+        console.log('Created BUDGET_ON_TRACK notification');
       } else {
-        console.log('ℹ️  BUDGET_ON_TRACK notification skipped (disabled by user)');
+        console.log('ℹBUDGET_ON_TRACK notification skipped (disabled by user)');
       }
     }
   } catch (error) {
-    console.error('❌ Error creating budget notification:', error);
+    console.error('Error creating budget notification:', error);
   }
 }
 

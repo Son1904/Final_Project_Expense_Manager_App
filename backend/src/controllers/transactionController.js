@@ -106,12 +106,12 @@ const createTransaction = asyncHandler(async (req, res) => {
             description
           }
         });
-        console.log('✅ Large transaction notification created');
+        console.log('Large transaction notification created');
       } else {
-        console.log('ℹ️  Large transaction notification skipped (disabled by user)');
+        console.log('Large transaction notification skipped (disabled by user)');
       }
     } catch (error) {
-      console.error('❌ Error creating large transaction notification:', error);
+      console.error('Error creating large transaction notification:', error);
     }
   }
 
@@ -436,7 +436,7 @@ async function updateBudgetsAfterTransaction(userId, categoryId) {
   try {
     const Budget = require('../models/Budget');
     
-    console.log('🔍 Checking budgets for userId:', userId, 'categoryId:', categoryId);
+    console.log('Checking budgets for userId:', userId, 'categoryId:', categoryId);
     
     // Find all active budgets that include this category
     const budgets = await Budget.find({
@@ -445,16 +445,16 @@ async function updateBudgetsAfterTransaction(userId, categoryId) {
       categories: categoryId
     });
 
-    console.log(`✅ Found ${budgets.length} active budgets with this category`);
+    console.log(`Found ${budgets.length} active budgets with this category`);
 
     // Update spent amount and check alerts for each budget
     for (const budget of budgets) {
-      console.log(`📊 Updating budget: ${budget.name}`);
+      console.log(`Updating budget: ${budget.name}`);
       await budget.updateSpent();
       await checkBudgetAlert(budget);
     }
   } catch (error) {
-    console.error('❌ Error updating budgets after transaction:', error);
+    console.error('Error updating budgets after transaction:', error);
   }
 }
 

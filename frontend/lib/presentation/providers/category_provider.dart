@@ -9,7 +9,7 @@ class CategoryProvider extends ChangeNotifier {
   CategoryProvider({required CategoryRepository categoryRepository})
       : _categoryRepository = categoryRepository;
 
-  // ==================== STATE ====================
+  // STATE 
 
   List<CategoryModel> _categories = [];
   List<CategoryModel> get categories => _categories;
@@ -20,7 +20,7 @@ class CategoryProvider extends ChangeNotifier {
   String? _errorMessage;
   String? get errorMessage => _errorMessage;
 
-  // ==================== FETCH CATEGORIES ====================
+  // FETCH CATEGORIES 
 
   /// Fetch all categories
   Future<void> fetchCategories({String? type}) async {
@@ -37,7 +37,7 @@ class CategoryProvider extends ChangeNotifier {
     }
   }
 
-  // ==================== GET CATEGORIES BY TYPE ====================
+  // GET CATEGORIES BY TYPE 
 
   /// Get income categories
   List<CategoryModel> get incomeCategories =>
@@ -47,7 +47,7 @@ class CategoryProvider extends ChangeNotifier {
   List<CategoryModel> get expenseCategories =>
       _categories.where((c) => c.isExpense).toList();
 
-  // ==================== CREATE CATEGORY ====================
+  // CREATE CATEGORY 
 
   /// Create new category
   Future<bool> createCategory({
@@ -78,7 +78,7 @@ class CategoryProvider extends ChangeNotifier {
     }
   }
 
-  // ==================== UPDATE CATEGORY ====================
+  // UPDATE CATEGORY 
 
   /// Update category
   Future<bool> updateCategory({
@@ -113,7 +113,7 @@ class CategoryProvider extends ChangeNotifier {
     }
   }
 
-  // ==================== DELETE CATEGORY ====================
+  // DELETE CATEGORY 
 
   /// Delete category
   Future<bool> deleteCategory(String id) async {
@@ -133,7 +133,7 @@ class CategoryProvider extends ChangeNotifier {
     }
   }
 
-  // ==================== HELPER METHODS ====================
+  // HELPER METHODS 
 
   void _setLoading(bool value) {
     _isLoading = value;

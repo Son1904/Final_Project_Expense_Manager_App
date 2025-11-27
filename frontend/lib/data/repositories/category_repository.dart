@@ -10,7 +10,7 @@ class CategoryRepository {
   CategoryRepository({required ApiService apiService})
       : _apiService = apiService;
 
-  // ==================== GET ALL CATEGORIES ====================
+  // GET ALL CATEGORIES 
 
   /// Get all categories (default + custom)
   Future<List<CategoryModel>> getCategories({String? type}) async {
@@ -32,7 +32,7 @@ class CategoryRepository {
     }
   }
 
-  // ==================== GET CATEGORY BY ID ====================
+  // GET CATEGORY BY ID 
 
   /// Get single category by ID
   Future<CategoryModel> getCategoryById(String id) async {
@@ -46,7 +46,7 @@ class CategoryRepository {
     }
   }
 
-  // ==================== CREATE CATEGORY ====================
+  // CREATE CATEGORY 
 
   /// Create new custom category
   Future<CategoryModel> createCategory({
@@ -73,7 +73,7 @@ class CategoryRepository {
     }
   }
 
-  // ==================== UPDATE CATEGORY ====================
+  // UPDATE CATEGORY 
 
   /// Update category (custom only)
   Future<CategoryModel> updateCategory({
@@ -101,7 +101,7 @@ class CategoryRepository {
     }
   }
 
-  // ==================== DELETE CATEGORY ====================
+  // DELETE CATEGORY 
 
   /// Delete category (custom only)
   Future<void> deleteCategory(String id) async {
@@ -112,7 +112,7 @@ class CategoryRepository {
     }
   }
 
-  // ==================== ERROR HANDLING ====================
+  // ERROR HANDLING 
 
   /// Handle Dio errors
   String _handleError(DioException error) {

@@ -73,12 +73,12 @@ id, email, full_name, phone, role, is_active,
 
         // Add search filter if provided
         if (search) {
-            query += ` WHERE(email ILIKE $${paramIndex} OR full_name ILIKE $${paramIndex})`;
-            queryParams.push(`% ${search}% `);
+            query += ` WHERE (email ILIKE $${paramIndex} OR full_name ILIKE $${paramIndex})`;
+            queryParams.push(`%${search}%`);
             paramIndex++;
         }
 
-        query += ` ORDER BY created_at DESC LIMIT $${paramIndex} OFFSET $${paramIndex + 1} `;
+        query += ` ORDER BY created_at DESC LIMIT $${paramIndex} OFFSET $${paramIndex + 1}`;
         queryParams.push(limit, offset);
 
         const result = await pool.query(query, queryParams);
@@ -88,7 +88,7 @@ id, email, full_name, phone, role, is_active,
         let countParams = [];
         if (search) {
             countQuery += ' WHERE (email ILIKE $1 OR full_name ILIKE $1)';
-            countParams.push(`% ${search}% `);
+            countParams.push(`%${search}%`);
         }
         const countResult = await pool.query(countQuery, countParams);
 
