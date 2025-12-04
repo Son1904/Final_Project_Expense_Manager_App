@@ -125,8 +125,9 @@ class _SpendingPieChartState extends State<SpendingPieChart> {
 
     return Column(
       children: [
-        // Chart
-        Expanded(
+        // Chart 
+        SizedBox(
+          height: 220,
           child: PieChart(
             PieChartData(
               pieTouchData: PieTouchData(
@@ -144,13 +145,13 @@ class _SpendingPieChartState extends State<SpendingPieChart> {
               ),
               borderData: FlBorderData(show: false),
               sectionsSpace: 2,
-              centerSpaceRadius: 60,
+              centerSpaceRadius: 50,
               sections: _spendingData.asMap().entries.map((entry) {
                 final index = entry.key;
                 final data = entry.value;
                 final isTouched = index == _touchedIndex;
-                final fontSize = isTouched ? 18.0 : 14.0;
-                final radius = isTouched ? 110.0 : 100.0;
+                final fontSize = isTouched ? 14.0 : 12.0;
+                final radius = isTouched ? 80.0 : 70.0;
                 final percentage = (data.total / total) * 100;
 
                 return PieChartSectionData(
@@ -177,71 +178,76 @@ class _SpendingPieChartState extends State<SpendingPieChart> {
 
         const SizedBox(height: 20),
 
-        // Legend
-        Wrap(
-          spacing: 16,
-          runSpacing: 12,
-          alignment: WrapAlignment.center,
-          children: _spendingData.asMap().entries.map((entry) {
-            final index = entry.key;
-            final data = entry.value;
-            final percentage = (data.total / total) * 100;
-            final isTouched = index == _touchedIndex;
+        // Legend - Scrollable 
+        SizedBox(
+          height: 120,
+          child: SingleChildScrollView(
+            child: Wrap(
+              spacing: 16,
+              runSpacing: 12,
+              alignment: WrapAlignment.center,
+              children: _spendingData.asMap().entries.map((entry) {
+                final index = entry.key;
+                final data = entry.value;
+                final percentage = (data.total / total) * 100;
+                final isTouched = index == _touchedIndex;
 
-            return InkWell(
-              onTap: () {
-                setState(() {
-                  _touchedIndex = index;
-                });
-              },
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                decoration: BoxDecoration(
-                  color: isTouched ? Colors.grey[200] : Colors.transparent,
-                  borderRadius: BorderRadius.circular(8),
-                  border: Border.all(
-                    color: isTouched ? Colors.grey[400]! : Colors.transparent,
-                    width: 1,
-                  ),
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Container(
-                      width: 16,
-                      height: 16,
-                      decoration: BoxDecoration(
-                        color: _parseColor(data.categoryColor),
-                        borderRadius: BorderRadius.circular(4),
+                return InkWell(
+                  onTap: () {
+                    setState(() {
+                      _touchedIndex = index;
+                    });
+                  },
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                    decoration: BoxDecoration(
+                      color: isTouched ? Colors.grey[200] : Colors.transparent,
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(
+                        color: isTouched ? Colors.grey[400]! : Colors.transparent,
+                        width: 1,
                       ),
                     ),
-                    const SizedBox(width: 8),
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
+                    child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        Text(
-                          data.categoryName,
-                          style: TextStyle(
-                            fontSize: 14,
-                            fontWeight: isTouched ? FontWeight.bold : FontWeight.w500,
+                        Container(
+                          width: 16,
+                          height: 16,
+                          decoration: BoxDecoration(
+                            color: _parseColor(data.categoryColor),
+                            borderRadius: BorderRadius.circular(4),
                           ),
                         ),
-                        Text(
-                          '\$${data.total.toStringAsFixed(0)} (${percentage.toStringAsFixed(1)}%)',
-                          style: TextStyle(
-                            fontSize: 12,
-                            color: Colors.grey[600],
-                            fontWeight: isTouched ? FontWeight.w600 : FontWeight.normal,
-                          ),
+                        const SizedBox(width: 8),
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text(
+                              data.categoryName,
+                              style: TextStyle(
+                                fontSize: 14,
+                                fontWeight: isTouched ? FontWeight.bold : FontWeight.w500,
+                              ),
+                            ),
+                            Text(
+                              '\$${data.total.toStringAsFixed(0)} (${percentage.toStringAsFixed(1)}%)',
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: Colors.grey[600],
+                                fontWeight: isTouched ? FontWeight.w600 : FontWeight.normal,
+                              ),
+                            ),
+                          ],
                         ),
                       ],
                     ),
-                  ],
-                ),
-              ),
-            );
-          }).toList(),
+                  ),
+                );
+              }).toList(),
+            ),
+          ),
         ),
 
         const SizedBox(height: 16),

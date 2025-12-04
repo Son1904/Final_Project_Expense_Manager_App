@@ -120,7 +120,7 @@ class AuthProvider extends ChangeNotifier {
         final response = e.response;
         if (response?.data != null) {
           if (response!.data is Map) {
-            final data = response!.data as Map;
+            final data = response.data as Map;
             if (data['message'] != null) {
               message = data['message'].toString();
             }
