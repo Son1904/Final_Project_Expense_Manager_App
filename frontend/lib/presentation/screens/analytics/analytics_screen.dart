@@ -227,35 +227,31 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
             ),
             const SizedBox(width: 12),
             Expanded(
-              child: SingleChildScrollView(
-                scrollDirection: Axis.horizontal,
-                child: Row(
-                  children: TimeRange.values.map((range) {
-                    final isSelected = _selectedRange == range;
-                    return Padding(
-                      padding: const EdgeInsets.only(right: 8),
-                      child: ChoiceChip(
-                        label: Text(_getRangeLabel(range)),
-                        selected: isSelected,
-                        onSelected: (selected) {
-                          if (selected) {
-                            setState(() {
-                              _selectedRange = range;
-                            });
-                          }
-                        },
-                        selectedColor: Colors.blue,
-                        labelStyle: TextStyle(
-                          color: isSelected ? Colors.white : Colors.grey[700],
-                          fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-                          fontSize: 13,
-                        ),
-                        backgroundColor: Colors.grey[200],
-                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-                      ),
-                    );
-                  }).toList(),
-                ),
+              child: Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: TimeRange.values.map((range) {
+                  final isSelected = _selectedRange == range;
+                  return ChoiceChip(
+                    label: Text(_getRangeLabel(range)),
+                    selected: isSelected,
+                    onSelected: (selected) {
+                      if (selected) {
+                        setState(() {
+                          _selectedRange = range;
+                        });
+                      }
+                    },
+                    selectedColor: Colors.blue,
+                    labelStyle: TextStyle(
+                      color: isSelected ? Colors.white : Colors.grey[700],
+                      fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                      fontSize: 13,
+                    ),
+                    backgroundColor: Colors.grey[200],
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                  );
+                }).toList(),
               ),
             ),
           ],
