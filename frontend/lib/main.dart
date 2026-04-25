@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'core/theme/app_theme.dart';
 import 'core/constants/app_strings.dart';
@@ -27,8 +27,13 @@ import 'presentation/screens/admin/admin_dashboard_screen.dart';
 import 'presentation/screens/admin/user_management_screen.dart';
 import 'presentation/providers/admin_provider.dart';
 import 'data/services/admin_service.dart';
+import 'data/services/recurring_service.dart';
+import 'presentation/providers/recurring_provider.dart';
+import 'presentation/screens/recurring/recurring_list_screen.dart';
+import 'presentation/screens/recurring/add_edit_recurring_screen.dart';
 import 'data/models/budget_model.dart';
 import 'data/models/transaction_model.dart';
+import 'data/models/recurring_transaction_model.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -110,6 +115,11 @@ class MyApp extends StatelessWidget {
             AdminService(apiService),
           ),
         ),
+        ChangeNotifierProvider(
+          create: (_) => RecurringProvider(
+            service: RecurringService(apiService),
+          ),
+        ),
       ],
       child: Consumer<AuthProvider>(
         builder: (context, authProvider, _) {
@@ -125,6 +135,7 @@ class MyApp extends StatelessWidget {
               '/settings/change-password': (context) => const ChangePasswordScreen(),
               '/settings/notifications': (context) => const NotificationSettingsScreen(),
               '/admin/users': (context) => const UserManagementScreen(),
+              '/recurring': (context) => const RecurringListScreen(),
             },
             onGenerateRoute: (settings) {
               // Handle routes with parameters
@@ -155,6 +166,17 @@ class MyApp extends StatelessWidget {
                 final initialType = settings.arguments as String?;
                 return MaterialPageRoute(
                   builder: (context) => AddEditTransactionScreen(initialType: initialType),
+                );
+              }
+              if (settings.name == '/recurring/add') {
+                return MaterialPageRoute(
+                  builder: (context) => const AddEditRecurringScreen(),
+                );
+              }
+              if (settings.name == '/recurring/edit') {
+                final recurring = settings.arguments as RecurringTransactionModel;
+                return MaterialPageRoute(
+                  builder: (context) => AddEditRecurringScreen(recurring: recurring),
                 );
               }
               return null;

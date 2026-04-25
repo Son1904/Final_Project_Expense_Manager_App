@@ -6,6 +6,8 @@ import '../../providers/category_provider.dart';
 import '../../providers/notification_provider.dart';
 import '../../widgets/common/custom_button.dart';
 import '../../widgets/common/custom_text_field.dart';
+import '../../widgets/common/app_snackbar.dart';
+import '../../widgets/common/app_bottom_sheet.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/utils/validators.dart';
 import '../../../data/models/transaction_model.dart';
@@ -97,22 +99,12 @@ class _AddEditTransactionScreenState extends State<AddEditTransactionScreen> {
     }
 
     if (_selectedCategoryId == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Please select a category'),
-          backgroundColor: AppColors.danger,
-        ),
-      );
+      AppSnackbar.showWarning(context, 'Please select a category');
       return;
     }
 
     if (_selectedPaymentMethod == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Please select a payment method'),
-          backgroundColor: AppColors.danger,
-        ),
-      );
+      AppSnackbar.showWarning(context, 'Please select a payment method');
       return;
     }
 
@@ -152,28 +144,20 @@ class _AddEditTransactionScreenState extends State<AddEditTransactionScreen> {
       final notificationProvider = context.read<NotificationProvider>();
       notificationProvider.loadUnreadCount();
       
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            isEditMode
-                ? 'Transaction updated successfully'
-                : 'Transaction added successfully',
-          ),
-          backgroundColor: AppColors.success,
-        ),
+      AppSnackbar.showSuccess(
+        context,
+        isEditMode
+            ? 'Transaction updated successfully'
+            : 'Transaction added successfully',
       );
       Navigator.pop(context, true);
     } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            transactionProvider.errorMessage ??
-                (isEditMode
-                    ? 'Failed to update transaction'
-                    : 'Failed to add transaction'),
-          ),
-          backgroundColor: AppColors.danger,
-        ),
+      AppSnackbar.showError(
+        context,
+        transactionProvider.errorMessage ??
+            (isEditMode
+                ? 'Failed to update transaction'
+                : 'Failed to add transaction'),
       );
     }
   }
@@ -539,27 +523,11 @@ class _AddEditTransactionScreenState extends State<AddEditTransactionScreen> {
   }
 
   Future<void> _showDeleteConfirmation() async {
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Delete Transaction'),
-        content: const Text(
-          'Are you sure you want to delete this transaction? This action cannot be undone.',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: const Text('Cancel'),
-          ),
-          TextButton(
-            onPressed: () => Navigator.pop(context, true),
-            style: TextButton.styleFrom(
-              foregroundColor: AppColors.danger,
-            ),
-            child: const Text('Delete'),
-          ),
-        ],
-      ),
+    final confirmed = await AppBottomSheet.showDangerConfirmation(
+      context,
+      title: 'Delete Transaction',
+      message: 'Are you sure you want to delete this transaction? This action cannot be undone.',
+      confirmText: 'Delete',
     );
 
     if (confirmed == true && mounted) {
@@ -570,22 +538,12 @@ class _AddEditTransactionScreenState extends State<AddEditTransactionScreen> {
       if (!mounted) return;
 
       if (success) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Transaction deleted successfully'),
-            backgroundColor: AppColors.success,
-          ),
-        );
+        AppSnackbar.showSuccess(context, 'Transaction deleted successfully');
         Navigator.pop(context, true);
       } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              transactionProvider.errorMessage ??
-                  'Failed to delete transaction',
-            ),
-            backgroundColor: AppColors.danger,
-          ),
+        AppSnackbar.showError(
+          context,
+          transactionProvider.errorMessage ?? 'Failed to delete transaction',
         );
       }
     }

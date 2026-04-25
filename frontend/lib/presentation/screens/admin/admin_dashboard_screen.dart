@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/admin_provider.dart';
+import '../../widgets/common/app_snackbar.dart';
 import 'package:provider/provider.dart';
 
 /// Minimal Admin Dashboard Screen
@@ -36,9 +37,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
     } catch (e) {
       if (mounted) {
         setState(() => _isLoading = false);
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to load stats: $e')),
-        );
+        AppSnackbar.showError(context, 'Failed to load stats: $e');
       }
     }
   }

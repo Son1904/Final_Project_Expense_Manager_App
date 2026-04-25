@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../data/services/api_service.dart';
+import '../../widgets/common/app_snackbar.dart';
 import 'package:provider/provider.dart';
 
 class NotificationSettingsScreen extends StatefulWidget {
@@ -72,13 +73,7 @@ class _NotificationSettingsScreenState extends State<NotificationSettingsScreen>
       }
 
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Notification preferences updated'),
-            backgroundColor: AppColors.success,
-            duration: Duration(seconds: 1),
-          ),
-        );
+        AppSnackbar.showSuccess(context, 'Notification preferences updated');
       }
     } catch (e) {
       // Revert on error
@@ -87,11 +82,9 @@ class _NotificationSettingsScreenState extends State<NotificationSettingsScreen>
       });
 
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(e.toString().replaceAll('Exception: ', '')),
-            backgroundColor: AppColors.danger,
-          ),
+        AppSnackbar.showError(
+          context,
+          e.toString().replaceAll('Exception: ', ''),
         );
       }
     }

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../providers/budget_provider.dart';
+import '../../widgets/common/app_snackbar.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/utils/formatters.dart';
 
@@ -29,9 +30,7 @@ class _BudgetListScreenState extends State<BudgetListScreen> {
     final budgetCount = budgetProvider.budgets.length;
 
     if (budgetCount == 0) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('No budgets to clear')),
-      );
+      AppSnackbar.showInfo(context, 'No budgets to clear');
       return;
     }
 
@@ -77,30 +76,16 @@ class _BudgetListScreenState extends State<BudgetListScreen> {
     
     if (budgets.isEmpty) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('No budgets to delete')),
-        );
+        AppSnackbar.showInfo(context, 'No budgets to delete');
       }
       return;
     }
     
     // Show loading
     if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Row(
-            children: [
-              const SizedBox(
-                width: 20,
-                height: 20,
-                child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
-              ),
-              const SizedBox(width: 12),
-              Text('Deleting ${budgets.length} budget${budgets.length > 1 ? 's' : ''}...'),
-            ],
-          ),
-          duration: const Duration(seconds: 30),
-        ),
+      AppSnackbar.showInfo(
+        context,
+        'Deleting ${budgets.length} budget${budgets.length > 1 ? 's' : ''}...',
       );
     }
 
@@ -127,18 +112,14 @@ class _BudgetListScreenState extends State<BudgetListScreen> {
       ScaffoldMessenger.of(context).clearSnackBars();
       
       if (failCount == 0) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Successfully deleted $successCount budget${successCount > 1 ? 's' : ''}'),
-            backgroundColor: Colors.green,
-          ),
+        AppSnackbar.showSuccess(
+          context,
+          'Successfully deleted $successCount budget${successCount > 1 ? 's' : ''}',
         );
       } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Deleted $successCount, Failed $failCount'),
-            backgroundColor: Colors.orange,
-          ),
+        AppSnackbar.showWarning(
+          context,
+          'Deleted $successCount, Failed $failCount',
         );
       }
 

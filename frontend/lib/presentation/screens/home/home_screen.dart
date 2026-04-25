@@ -5,6 +5,8 @@ import '../../providers/transaction_provider.dart';
 import '../../providers/category_provider.dart';
 import '../../providers/budget_provider.dart';
 import '../../providers/notification_provider.dart';
+import '../../widgets/common/app_snackbar.dart';
+import '../../widgets/common/expandable_fab.dart';
 import '../transactions/add_edit_transaction_screen.dart';
 import '../transactions/transaction_list_screen.dart';
 import '../categories/category_list_screen.dart';
@@ -107,33 +109,48 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
         ),
       ),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: () async {
-          final result = await Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (context) => MultiProvider(
-                providers: [
-                  ChangeNotifierProvider<CategoryProvider>.value(
-                    value: context.read<CategoryProvider>(),
-                  ),
-                  ChangeNotifierProvider<TransactionProvider>.value(
-                    value: context.read<TransactionProvider>(),
-                  ),
-                ],
-                child: const AddEditTransactionScreen(),
-              ),
-            ),
-          );
-          if (result == true && mounted) {
-            _loadData();
-          }
-        },
-        icon: const Icon(Icons.add),
-        label: const Text('Add Transaction'),
+      floatingActionButton: ExpandableFab(
+        icon: Icons.add,
+        closeIcon: Icons.close,
         backgroundColor: AppColors.primary,
+        actions: [
+          FabAction(
+            icon: Icons.arrow_upward,
+            label: 'Add Income',
+            color: AppColors.income,
+            onPressed: () => _navigateToAddTransaction('income'),
+          ),
+          FabAction(
+            icon: Icons.arrow_downward,
+            label: 'Add Expense',
+            color: AppColors.expense,
+            onPressed: () => _navigateToAddTransaction('expense'),
+          ),
+        ],
       ),
     );
+  }
+
+  Future<void> _navigateToAddTransaction(String type) async {
+    final result = await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => MultiProvider(
+          providers: [
+            ChangeNotifierProvider<CategoryProvider>.value(
+              value: context.read<CategoryProvider>(),
+            ),
+            ChangeNotifierProvider<TransactionProvider>.value(
+              value: context.read<TransactionProvider>(),
+            ),
+          ],
+          child: AddEditTransactionScreen(initialType: type),
+        ),
+      ),
+    );
+    if (result == true && mounted) {
+      _loadData();
+    }
   }
 
   Widget _buildSummaryCards(BuildContext context) {
@@ -612,6 +629,14 @@ class _HomeScreenState extends State<HomeScreen> {
             },
           ),
           ListTile(
+            leading: const Icon(Icons.autorenew_outlined),
+            title: const Text('Recurring Settings'),
+            onTap: () {
+              Navigator.pop(context);
+              Navigator.pushNamed(context, '/recurring');
+            },
+          ),
+          ListTile(
             leading: const Icon(Icons.notifications_outlined),
             title: const Text('Notifications'),
             trailing: Consumer<NotificationProvider>(
@@ -661,12 +686,7 @@ class _HomeScreenState extends State<HomeScreen> {
               Navigator.pop(context);
               await authProvider.logout();
               if (context.mounted) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text('Logged out successfully'),
-                    backgroundColor: AppColors.success,
-                  ),
-                );
+                AppSnackbar.showSuccess(context, 'Logged out successfully');
               }
             },
           ),

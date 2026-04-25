@@ -2,6 +2,7 @@ require('dotenv').config();
 const app = require('./src/app');
 const { connectMongoDB, connectPostgreSQL } = require('./src/config/database');
 const logger = require('./src/utils/logger');
+const { startRecurringScheduler } = require('./src/scheduler/recurringScheduler');
 
 const PORT = process.env.PORT || 3000;
 
@@ -15,6 +16,9 @@ const startServer = async () => {
     // Connect to databases
     await connectMongoDB();
     await connectPostgreSQL();
+
+    // Start background schedulers
+    startRecurringScheduler();
 
     // Start Express server
     server = app.listen(PORT, () => {
@@ -34,11 +38,11 @@ const startServer = async () => {
  */
 const gracefulShutdown = (signal) => {
   logger.info(`\n${signal} received. Starting graceful shutdown...`);
-  
+
   if (server) {
     server.close(() => {
       logger.info('HTTP server closed');
-      
+
       // Close database connections
       const mongoose = require('mongoose');
       mongoose.connection.close(false, () => {

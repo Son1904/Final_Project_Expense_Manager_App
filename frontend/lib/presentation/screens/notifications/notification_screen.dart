@@ -4,6 +4,7 @@ import '../../../core/constants/app_colors.dart';
 import '../../providers/notification_provider.dart';
 import '../../providers/budget_provider.dart';
 import '../../providers/transaction_provider.dart';
+import '../../widgets/common/app_snackbar.dart';
 import '../../../data/models/notification_model.dart';
 
 class NotificationScreen extends StatefulWidget {
@@ -188,21 +189,11 @@ class _NotificationScreenState extends State<NotificationScreen> {
         try {
           await notificationProvider.deleteNotification(notification.id);
           if (context.mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text('Notification deleted'),
-                duration: Duration(seconds: 2),
-              ),
-            );
+            AppSnackbar.showSuccess(context, 'Notification deleted');
           }
         } catch (e) {
           if (context.mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text('Failed to delete notification'),
-                backgroundColor: Colors.red,
-              ),
-            );
+            AppSnackbar.showError(context, 'Failed to delete notification');
           }
         }
       },
@@ -352,21 +343,11 @@ class _NotificationScreenState extends State<NotificationScreen> {
     try {
       await notificationProvider.markAllAsRead();
       if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('All notifications marked as read'),
-            backgroundColor: AppColors.success,
-          ),
-        );
+        AppSnackbar.showSuccess(context, 'All notifications marked as read');
       }
     } catch (e) {
       if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Failed to mark all as read'),
-            backgroundColor: Colors.red,
-          ),
-        );
+        AppSnackbar.showError(context, 'Failed to mark all as read');
       }
     }
   }
@@ -403,21 +384,11 @@ class _NotificationScreenState extends State<NotificationScreen> {
       try {
         await notificationProvider.clearAll();
         if (context.mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('All notifications cleared'),
-              backgroundColor: AppColors.success,
-            ),
-          );
+          AppSnackbar.showSuccess(context, 'All notifications cleared');
         }
       } catch (e) {
         if (context.mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Failed to clear notifications'),
-              backgroundColor: Colors.red,
-            ),
-          );
+          AppSnackbar.showError(context, 'Failed to clear notifications');
         }
       }
     }

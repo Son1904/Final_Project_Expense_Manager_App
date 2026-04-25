@@ -65,6 +65,7 @@ const budgetRoutes = require('./routes/budget.routes');
 const notificationRoutes = require('./routes/notification.routes');
 const settingsRoutes = require('./routes/settings.routes');
 const adminRoutes = require('./routes/admin.routes');
+const recurringRoutes = require('./routes/recurring.routes');
 
 app.use('/api/auth', authRoutes);
 app.use('/api/transactions', transactionRoutes);
@@ -73,6 +74,7 @@ app.use('/api/budgets', budgetRoutes);
 app.use('/api/notifications', notificationRoutes);
 app.use('/api/settings', settingsRoutes);
 app.use('/api/admin', adminRoutes);
+app.use('/api/recurring-transactions', recurringRoutes);
 
 
 // Welcome route

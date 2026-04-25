@@ -34,6 +34,12 @@ class ApiConstants {
   static const String transactionSummary = '$transactions/summary';
   static const String spendingByCategory = '$transactions/spending-by-category';
 
+  // Recurring Transactions
+  static const String recurringTransactions = '$apiVersion/recurring-transactions';
+  static String recurringById(String id) => '$recurringTransactions/$id';
+  static const String recurringUpcoming = '$recurringTransactions/upcoming';
+  static String recurringToggle(String id) => '$recurringTransactions/$id/toggle';
+
   // Headers
   static const String contentType = 'Content-Type';
   static const String authorization = 'Authorization';

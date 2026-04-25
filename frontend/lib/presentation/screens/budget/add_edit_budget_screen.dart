@@ -6,6 +6,8 @@ import '../../providers/budget_provider.dart';
 import '../../providers/category_provider.dart';
 import '../../widgets/common/custom_button.dart';
 import '../../widgets/common/custom_text_field.dart';
+import '../../widgets/common/app_snackbar.dart';
+import '../../widgets/common/app_bottom_sheet.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/utils/validators.dart';
 import '../../../core/utils/formatters.dart';
@@ -181,12 +183,7 @@ class _AddEditBudgetScreenState extends State<AddEditBudgetScreen> {
 
     if (expenseCategories.isEmpty) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('No expense categories available'),
-          backgroundColor: AppColors.warning,
-        ),
-      );
+      AppSnackbar.showWarning(context, 'No expense categories available');
       return;
     }
 
@@ -212,22 +209,15 @@ class _AddEditBudgetScreenState extends State<AddEditBudgetScreen> {
 
     final amount = double.tryParse(_amountController.text);
     if (amount == null || amount <= 0) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Please enter a valid budget amount greater than 0'),
-          backgroundColor: AppColors.danger,
-        ),
+      AppSnackbar.showWarning(
+        context,
+        'Please enter a valid budget amount greater than 0',
       );
       return;
     }
 
     if (_endDate.isBefore(_startDate) || _endDate.isAtSameMomentAs(_startDate)) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('End date must be after start date'),
-          backgroundColor: AppColors.danger,
-        ),
-      );
+      AppSnackbar.showWarning(context, 'End date must be after start date');
       return;
     }
 
@@ -268,48 +258,28 @@ class _AddEditBudgetScreenState extends State<AddEditBudgetScreen> {
     if (!mounted) return;
 
     if (success) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            isEditMode
-                ? 'Budget updated successfully'
-                : 'Budget created successfully',
-          ),
-          backgroundColor: AppColors.success,
-        ),
+      AppSnackbar.showSuccess(
+        context,
+        isEditMode
+            ? 'Budget updated successfully'
+            : 'Budget created successfully',
       );
       Navigator.pop(context, true);
     } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            budgetProvider.errorMessage ??
-                (isEditMode ? 'Failed to update budget' : 'Failed to create budget'),
-          ),
-          backgroundColor: AppColors.danger,
-        ),
+      AppSnackbar.showError(
+        context,
+        budgetProvider.errorMessage ??
+            (isEditMode ? 'Failed to update budget' : 'Failed to create budget'),
       );
     }
   }
 
   Future<void> _showDeleteConfirmation() async {
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Delete Budget'),
-        content: const Text('Are you sure you want to delete this budget?'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: const Text('Cancel'),
-          ),
-          TextButton(
-            onPressed: () => Navigator.pop(context, true),
-            style: TextButton.styleFrom(foregroundColor: AppColors.danger),
-            child: const Text('Delete'),
-          ),
-        ],
-      ),
+    final confirmed = await AppBottomSheet.showDangerConfirmation(
+      context,
+      title: 'Delete Budget',
+      message: 'Are you sure you want to delete this budget?',
+      confirmText: 'Delete',
     );
 
     if (confirmed == true && mounted) {
@@ -319,21 +289,12 @@ class _AddEditBudgetScreenState extends State<AddEditBudgetScreen> {
       if (!mounted) return;
 
       if (success) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Budget deleted successfully'),
-            backgroundColor: AppColors.success,
-          ),
-        );
+        AppSnackbar.showSuccess(context, 'Budget deleted successfully');
         Navigator.pop(context, true);
       } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              budgetProvider.errorMessage ?? 'Failed to delete budget',
-            ),
-            backgroundColor: AppColors.danger,
-          ),
+        AppSnackbar.showError(
+          context,
+          budgetProvider.errorMessage ?? 'Failed to delete budget',
         );
       }
     }

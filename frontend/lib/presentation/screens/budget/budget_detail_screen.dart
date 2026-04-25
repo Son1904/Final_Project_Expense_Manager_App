@@ -5,6 +5,7 @@ import '../../../data/models/budget_model.dart';
 import '../../providers/budget_provider.dart';
 import '../../providers/transaction_provider.dart';
 import '../../providers/category_provider.dart';
+import '../../widgets/common/app_snackbar.dart';
 import 'dart:math' as math;
 
 /// Budget Detail Screen - Shows detailed budget information with circular chart
@@ -51,9 +52,7 @@ class _BudgetDetailScreenState extends State<BudgetDetailScreen> {
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error loading budget: $e')),
-        );
+        AppSnackbar.showError(context, 'Error loading budget: $e');
       }
     } finally {
       if (mounted) {
@@ -75,9 +74,7 @@ class _BudgetDetailScreenState extends State<BudgetDetailScreen> {
               await budgetProvider.refreshBudget(widget.budgetId);
               await _loadBudgetDetails();
               if (mounted) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Budget refreshed')),
-                );
+                AppSnackbar.showSuccess(context, 'Budget refreshed');
               }
             },
           ),

@@ -3,6 +3,8 @@ import 'package:provider/provider.dart';
 import '../../providers/category_provider.dart';
 import '../../widgets/common/custom_button.dart';
 import '../../widgets/common/custom_text_field.dart';
+import '../../widgets/common/app_snackbar.dart';
+import '../../widgets/common/app_bottom_sheet.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../data/models/category_model.dart';
 
@@ -69,54 +71,30 @@ class _AddEditCategoryScreenState extends State<AddEditCategoryScreen> {
     if (!mounted) return;
 
     if (success) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            isEditMode
-                ? 'Category updated successfully'
-                : 'Category created successfully',
-          ),
-          backgroundColor: AppColors.success,
-        ),
+      AppSnackbar.showSuccess(
+        context,
+        isEditMode
+            ? 'Category updated successfully'
+            : 'Category created successfully',
       );
       Navigator.pop(context, true);
     } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            categoryProvider.errorMessage ??
-                (isEditMode
-                    ? 'Failed to update category'
-                    : 'Failed to create category'),
-          ),
-          backgroundColor: AppColors.danger,
-        ),
+      AppSnackbar.showError(
+        context,
+        categoryProvider.errorMessage ??
+            (isEditMode
+                ? 'Failed to update category'
+                : 'Failed to create category'),
       );
     }
   }
 
   Future<void> _handleDelete() async {
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Delete Category'),
-        content: const Text(
-          'Are you sure you want to delete this category? Transactions using this category will need to be reassigned.',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: const Text('Cancel'),
-          ),
-          TextButton(
-            onPressed: () => Navigator.pop(context, true),
-            style: TextButton.styleFrom(
-              foregroundColor: AppColors.danger,
-            ),
-            child: const Text('Delete'),
-          ),
-        ],
-      ),
+    final confirmed = await AppBottomSheet.showDangerConfirmation(
+      context,
+      title: 'Delete Category',
+      message: 'Are you sure you want to delete this category? Transactions using this category will need to be reassigned.',
+      confirmText: 'Delete',
     );
 
     if (confirmed == true && mounted) {
@@ -126,21 +104,12 @@ class _AddEditCategoryScreenState extends State<AddEditCategoryScreen> {
       if (!mounted) return;
 
       if (success) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Category deleted successfully'),
-            backgroundColor: AppColors.success,
-          ),
-        );
+        AppSnackbar.showSuccess(context, 'Category deleted successfully');
         Navigator.pop(context, true);
       } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              categoryProvider.errorMessage ?? 'Failed to delete category',
-            ),
-            backgroundColor: AppColors.danger,
-          ),
+        AppSnackbar.showError(
+          context,
+          categoryProvider.errorMessage ?? 'Failed to delete category',
         );
       }
     }

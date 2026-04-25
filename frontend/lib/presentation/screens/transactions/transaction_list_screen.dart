@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../providers/transaction_provider.dart';
 import '../../providers/category_provider.dart';
+import '../../widgets/common/app_snackbar.dart';
 import 'add_edit_transaction_screen.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/utils/formatters.dart';
@@ -160,30 +161,16 @@ class _TransactionListScreenState extends State<TransactionListScreen> {
     
     if (transactions.isEmpty) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('No transactions to delete')),
-        );
+        AppSnackbar.showInfo(context, 'No transactions to delete');
       }
       return;
     }
     
     // Show loading
     if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Row(
-            children: [
-              const SizedBox(
-                width: 20,
-                height: 20,
-                child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
-              ),
-              const SizedBox(width: 12),
-              Text('Deleting ${transactions.length} transaction${transactions.length > 1 ? 's' : ''}...'),
-            ],
-          ),
-          duration: const Duration(seconds: 30),
-        ),
+      AppSnackbar.showInfo(
+        context,
+        'Deleting ${transactions.length} transaction${transactions.length > 1 ? 's' : ''}...',
       );
     }
 
@@ -210,18 +197,14 @@ class _TransactionListScreenState extends State<TransactionListScreen> {
       ScaffoldMessenger.of(context).clearSnackBars();
       
       if (failCount == 0) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Successfully deleted $successCount transaction${successCount > 1 ? 's' : ''}'),
-            backgroundColor: Colors.green,
-          ),
+        AppSnackbar.showSuccess(
+          context,
+          'Successfully deleted $successCount transaction${successCount > 1 ? 's' : ''}',
         );
       } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Deleted $successCount, Failed $failCount'),
-            backgroundColor: Colors.orange,
-          ),
+        AppSnackbar.showWarning(
+          context,
+          'Deleted $successCount, Failed $failCount',
         );
       }
 
@@ -252,22 +235,7 @@ class _TransactionListScreenState extends State<TransactionListScreen> {
     if (!mounted) return;
 
     // Show loading
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Row(
-          children: [
-            SizedBox(
-              width: 20,
-              height: 20,
-              child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
-            ),
-            SizedBox(width: 12),
-            Text('Exporting transactions...'),
-          ],
-        ),
-        duration: Duration(seconds: 30),
-      ),
-    );
+    AppSnackbar.showInfo(context, 'Exporting transactions...');
 
     try {
       final apiService = context.read<ApiService>();
@@ -310,27 +278,21 @@ class _TransactionListScreenState extends State<TransactionListScreen> {
         final filePath = await CsvHelper.downloadCsv(csv, filename);
         
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(
-                filePath != null 
-                  ? 'Saved $transactionCount transactions to:\n$filePath'
-                  : 'Downloaded $transactionCount transactions'
-              ),
-              backgroundColor: AppColors.success,
-              duration: const Duration(seconds: 4),
-            ),
+          ScaffoldMessenger.of(context).clearSnackBars();
+          AppSnackbar.showSuccess(
+            context,
+            filePath != null 
+              ? 'Saved $transactionCount transactions to:\n$filePath'
+              : 'Downloaded $transactionCount transactions',
           );
         }
       }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).clearSnackBars();
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(e.toString().replaceAll('Exception: ', '')),
-            backgroundColor: AppColors.danger,
-          ),
+        AppSnackbar.showError(
+          context,
+          e.toString().replaceAll('Exception: ', ''),
         );
       }
     }

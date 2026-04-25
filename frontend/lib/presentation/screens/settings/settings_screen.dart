@@ -4,9 +4,10 @@ import '../../providers/auth_provider.dart';
 import '../../providers/transaction_provider.dart';
 import '../../providers/budget_provider.dart';
 import '../../providers/notification_provider.dart';
+import '../../widgets/common/app_snackbar.dart';
+import '../../widgets/common/app_bottom_sheet.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../data/services/api_service.dart';
-import '../auth/login_screen.dart';
 import '../../../core/utils/csv_helper.dart';
 
 class SettingsScreen extends StatefulWidget {
@@ -211,9 +212,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
             onPressed: () async {
               final newName = controller.text.trim();
               if (newName.isEmpty) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Name cannot be empty')),
-                );
+                AppSnackbar.showWarning(context, 'Name cannot be empty');
                 return;
               }
 
@@ -231,23 +230,16 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   await authProvider.getProfile();
                   
                   if (context.mounted) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('Name updated successfully'),
-                        backgroundColor: AppColors.success,
-                      ),
-                    );
+                    AppSnackbar.showSuccess(context, 'Name updated successfully');
                   }
                 } else {
                   throw Exception(response.data['message'] ?? 'Failed to update');
                 }
               } catch (e) {
                 if (context.mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text(e.toString().replaceAll('Exception: ', '')),
-                      backgroundColor: AppColors.danger,
-                    ),
+                  AppSnackbar.showError(
+                    context,
+                    e.toString().replaceAll('Exception: ', ''),
                   );
                 }
               }
@@ -282,22 +274,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     if (!context.mounted) return;
 
     // Show loading
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Row(
-          children: [
-            SizedBox(
-              width: 20,
-              height: 20,
-              child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
-            ),
-            SizedBox(width: 12),
-            Text('Exporting transactions...'),
-          ],
-        ),
-        duration: Duration(seconds: 30),
-      ),
-    );
+    AppSnackbar.showInfo(context, 'Exporting transactions...');
 
     try {
       final apiService = context.read<ApiService>();
@@ -327,188 +304,117 @@ class _SettingsScreenState extends State<SettingsScreen> {
         final filePath = await CsvHelper.downloadCsv(csv, filename);
         
         if (context.mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(
-                filePath != null 
-                  ? 'Saved $transactionCount transactions to:\n$filePath'
-                  : 'Downloaded $transactionCount transactions'
-              ),
-              backgroundColor: AppColors.success,
-              duration: const Duration(seconds: 4),
-            ),
+          ScaffoldMessenger.of(context).clearSnackBars();
+          AppSnackbar.showSuccess(
+            context,
+            filePath != null 
+              ? 'Saved $transactionCount transactions to:\n$filePath'
+              : 'Downloaded $transactionCount transactions',
           );
         }
       }
     } catch (e) {
       if (context.mounted) {
         ScaffoldMessenger.of(context).clearSnackBars();
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(e.toString().replaceAll('Exception: ', '')),
-            backgroundColor: AppColors.danger,
-          ),
+        AppSnackbar.showError(
+          context,
+          e.toString().replaceAll('Exception: ', ''),
         );
       }
     }
   }
 
-  void _showClearDataDialog(BuildContext context) {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Clear All Data?'),
-        content: const Text(
-          'This will delete all your transactions and budgets. This action cannot be undone.\n\nYour account will remain active.',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
-          ),
-          ElevatedButton(
-            onPressed: () async {
-              Navigator.pop(context);
-              
-              try {
-                final apiService = context.read<ApiService>();
-                final response = await apiService.delete('/api/auth/clear-data');
-
-                if (response.data['success'] == true) {
-                  // Refresh all providers to update UI immediately
-                  if (context.mounted) {
-                    final transactionProvider = context.read<TransactionProvider>();
-                    final budgetProvider = context.read<BudgetProvider>();
-                    final notificationProvider = context.read<NotificationProvider>();
-                    
-                    // Refresh data
-                    await Future.wait([
-                      transactionProvider.fetchTransactions(),
-                      transactionProvider.fetchSummary(),
-                      budgetProvider.fetchBudgets(),
-                      notificationProvider.loadNotifications(),
-                      notificationProvider.loadUnreadCount(),
-                    ]);
-                    
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('All data cleared successfully'),
-                        backgroundColor: AppColors.warning,
-                      ),
-                    );
-                  }
-                } else {
-                  throw Exception(response.data['message'] ?? 'Failed to clear data');
-                }
-              } catch (e) {
-                if (context.mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text(e.toString().replaceAll('Exception: ', '')),
-                      backgroundColor: AppColors.danger,
-                    ),
-                  );
-                }
-              }
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.orange,
-              foregroundColor: Colors.white,
-            ),
-            child: const Text('Clear Data'),
-          ),
-        ],
-      ),
+  void _showClearDataDialog(BuildContext context) async {
+    final confirmed = await AppBottomSheet.showDangerConfirmation(
+      context,
+      title: 'Clear All Data?',
+      message: 'This will delete all your transactions and budgets. This action cannot be undone.\n\nYour account will remain active.',
+      confirmText: 'Clear Data',
     );
+
+    if (confirmed == true && context.mounted) {
+      try {
+        final apiService = context.read<ApiService>();
+        final response = await apiService.delete('/api/auth/clear-data');
+
+        if (response.data['success'] == true) {
+          // Refresh all providers to update UI immediately
+          if (context.mounted) {
+            final transactionProvider = context.read<TransactionProvider>();
+            final budgetProvider = context.read<BudgetProvider>();
+            final notificationProvider = context.read<NotificationProvider>();
+            
+            // Refresh data
+            await Future.wait([
+              transactionProvider.fetchTransactions(),
+              transactionProvider.fetchSummary(),
+              budgetProvider.fetchBudgets(),
+              notificationProvider.loadNotifications(),
+              notificationProvider.loadUnreadCount(),
+            ]);
+            
+            AppSnackbar.showSuccess(context, 'All data cleared successfully');
+          }
+        } else {
+          throw Exception(response.data['message'] ?? 'Failed to clear data');
+        }
+      } catch (e) {
+        if (context.mounted) {
+          AppSnackbar.showError(
+            context,
+            e.toString().replaceAll('Exception: ', ''),
+          );
+        }
+      }
+    }
   }
 
-  void _showDeleteAccountDialog(BuildContext context) {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Delete Account?'),
-        content: const Text(
-          'This will permanently delete your account and all associated data. This action cannot be undone.\n\nAre you absolutely sure?',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
-          ),
-          ElevatedButton(
-            onPressed: () async {
-              Navigator.pop(context);
-              
-              try {
-                final apiService = context.read<ApiService>();
-                final response = await apiService.delete('/api/auth/account');
-
-                if (response.data['success'] == true) {
-                  if (context.mounted) {
-                    // Logout and clear auth state
-                    await context.read<AuthProvider>().logout();
-                    
-                    if (context.mounted) {
-                      // Navigate to login and remove all previous routes
-                      // This will trigger a complete app rebuild with fresh state
-                      // Navigator.of(context).pushAndRemoveUntil(
-                      //   MaterialPageRoute(builder: (context) => const LoginScreen()),
-                      //   (route) => false,
-                      // );
-                    }
-                  }
-                } else {
-                  throw Exception(response.data['message'] ?? 'Failed to delete account');
-                }
-              } catch (e) {
-                if (context.mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text(e.toString().replaceAll('Exception: ', '')),
-                      backgroundColor: AppColors.danger,
-                    ),
-                  );
-                }
-              }
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.red,
-              foregroundColor: Colors.white,
-            ),
-            child: const Text('Delete Account'),
-          ),
-        ],
-      ),
+  void _showDeleteAccountDialog(BuildContext context) async {
+    final confirmed = await AppBottomSheet.showDangerConfirmation(
+      context,
+      title: 'Delete Account?',
+      message: 'This will permanently delete your account and all associated data. This action cannot be undone.\n\nAre you absolutely sure?',
+      confirmText: 'Delete Account',
     );
+
+    if (confirmed == true && context.mounted) {
+      try {
+        final apiService = context.read<ApiService>();
+        final response = await apiService.delete('/api/auth/account');
+
+        if (response.data['success'] == true) {
+          if (context.mounted) {
+            // Logout and clear auth state
+            await context.read<AuthProvider>().logout();
+          }
+        } else {
+          throw Exception(response.data['message'] ?? 'Failed to delete account');
+        }
+      } catch (e) {
+        if (context.mounted) {
+          AppSnackbar.showError(
+            context,
+            e.toString().replaceAll('Exception: ', ''),
+          );
+        }
+      }
+    }
   }
 
-  void _logout(BuildContext context) {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Logout'),
-        content: const Text('Are you sure you want to logout?'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
-          ),
-          ElevatedButton(
-            onPressed: () async {
-              Navigator.pop(context);
-              await context.read<AuthProvider>().logout();
-              // if (context.mounted) {
-              //   Navigator.of(context).pushNamedAndRemoveUntil('/', (route) => false);
-              // }
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.red,
-              foregroundColor: Colors.white,
-            ),
-            child: const Text('Logout'),
-          ),
-        ],
-      ),
+  void _logout(BuildContext context) async {
+    final confirmed = await AppBottomSheet.showConfirmation(
+      context,
+      title: 'Logout',
+      message: 'Are you sure you want to logout?',
+      confirmText: 'Logout',
+      cancelText: 'Cancel',
+      confirmColor: Colors.red,
+      icon: Icons.logout,
+      iconColor: Colors.red,
     );
+
+    if (confirmed == true && context.mounted) {
+      await context.read<AuthProvider>().logout();
+    }
   }
 }
